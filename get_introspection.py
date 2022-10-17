@@ -1,5 +1,5 @@
 import requests, functools, json
-import 
+import yaml
 
 def send_request():
     url = "http://neogeek.io:4000/graphql"
@@ -8,7 +8,7 @@ def send_request():
     body = {
         "query": """query IntrospectionQuery {
       __schema {
-        
+
         queryType { name }
         mutationType { name }
         subscriptionType { name }
@@ -18,7 +18,7 @@ def send_request():
         directives {
           name
           description
-          
+
           locations
           args {
             ...InputValue
@@ -31,7 +31,7 @@ def send_request():
       kind
       name
       description
-      
+
       fields(includeDeprecated: true) {
         name
         description
@@ -66,8 +66,8 @@ def send_request():
       description
       type { ...TypeRef }
       defaultValue
-      
-      
+
+
     }
 
     fragment TypeRef on __Type {
@@ -102,7 +102,7 @@ def send_request():
         }
       }
     }
-  
+
         """
     }
 
@@ -140,12 +140,12 @@ def parse(inspection_json):
                     object["name"] = d["name"]
                     object["type"] = d["type"]
                     object["args"] = []
-                    
+
                     for a in d["args"]:
-                        arg = {} 
+                        arg = {}
                         arg["name"]=d["name"]
                         object["args"].append(arg)
-                    
+
                     query_list.append(object)
             elif d["name"] == mutation_type_name:
                 for f in d["fields"]:
@@ -153,12 +153,12 @@ def parse(inspection_json):
                     object["name"] = f["name"]
                     object["type"] = f["type"]
                     object["args"] = []
-                    
+
                     for a in f["args"]:
                         arg = {}
                         arg["name"] = a["name"]
-                        object["args"].append(arg) 
-                    
+                        object["args"].append(arg)
+
                     mutation_list.append(object)
             else:
                 object = {}
@@ -170,15 +170,20 @@ def parse(inspection_json):
             scalar_list.append(d)
         elif d["kind"] == "ENUM":
             enum_list.append(d)
-        
+
         return input_object_list, object_list, scalar_list, enum_list, query_list, mutation_list
 
-print(parse(send_request()))
-        
 
-    
 
-    
+data = parse(send_request())
+print(data)
+
+
+
+
+
+
+
 
 
 
