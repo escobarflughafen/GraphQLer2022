@@ -1,5 +1,6 @@
 import requests, functools, json
 import yaml
+from pprint import pprint
 
 def send_request():
     url = "http://neogeek.io:4000/graphql"
@@ -114,6 +115,12 @@ def send_request():
 
     return json.loads(x.text)
 
+def recursive_oftype(data):
+  if(data["ofType"] == None):
+    return {"kind" : data["kind"], "name" : data["name"]}
+  else:
+    return {"kind" : data["kind"], "name" : data["name"], "ofType" : recursive_oftype(data["ofType"])}
+
 
 def parse(inspection_json):
     input_object_list = []
@@ -137,16 +144,25 @@ def parse(inspection_json):
             if d["name"] == query_type_name:
                 for f in d["fields"]:
                     object = {}
-                    object["name"] = d["name"]
-                    object["type"] = d["type"]
-                    object["args"] = []
+                    object["name"] = f["name"]
+                    types = {}
+                    types = recursive_oftype(f["type"])
 
-                    for a in d["args"]:
+                    object["produces"] = types
+
+                    object["consumes"] = []
+
+                    for a in f["args"]:
                         arg = {}
-                        arg["name"]=d["name"]
-                        object["args"].append(arg)
+                        arg["name"] = a["name"]
+                        types = {}
+                        types = recursive_oftype(f["type"])
+                        arg["type"] = types
+
+                        object["consumes"].append(arg)
 
                     query_list.append(object)
+                    '''
             elif d["name"] == mutation_type_name:
                 for f in d["fields"]:
                     object = {}
@@ -165,19 +181,23 @@ def parse(inspection_json):
                 for f in d["fields"]:
                     object["name"] = f["name"]
                     object["type"] = f["type"]["kind"]
-                object_list.push[object_list]
+                object_list.append(object)
+                '''
         elif d["kind"] == "SCALAR":
             scalar_list.append(d)
         elif d["kind"] == "ENUM":
             enum_list.append(d)
 
-        return input_object_list, object_list, scalar_list, enum_list, query_list, mutation_list
+    return input_object_list, object_list, scalar_list, enum_list, query_list, mutation_list
 
 
 
 data = parse(send_request())
-print(data)
+pprint(data)
 
+
+test = yaml.dump(data)
+print(test)
 
 
 
