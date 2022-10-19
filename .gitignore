@@ -1,4 +1,6 @@
-# Mac specific
+
+test-server/server.js
+
 .DS_Store
 
 # Byte-compiled / optimized / DLL files
