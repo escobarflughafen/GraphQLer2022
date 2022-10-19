@@ -5,7 +5,8 @@ from pprint import pprint
 
 all_types = {}
 
-mock_mutation = json.load(open("./sample_introspection.json"))
+mock_mutation = json.load(open("./shopify_introspection.json"))
+mutation_type_name = mock_mutation["data"]["__schema"]["mutationType"]["name"]
 
 def get_name(raw_introspection):
     return raw_introspection["name"]
@@ -33,7 +34,6 @@ def get_type(typedef):
                 "ofType": get_type(typedef["ofType"])
             }
 
-    return {}
 
 
 def get_args(raw_introspection):
@@ -94,7 +94,7 @@ class Mutation:
 if __name__ == "__main__":
     mutations = []
     for _ in mock_mutation["data"]["__schema"]["types"]:
-        if _["name"]=="Mutation":
+        if _["name"]==mutation_type_name:
             mutations = _["fields"]
 
     for m in mutations:
