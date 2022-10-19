@@ -1,6 +1,7 @@
 from introspection_query import * 
 import yaml
 
+url = "http://neogeek.io:4000/graphql"
 
 def get_type(inspection_param_json):
     if inspection_param_json["ofType"] is None:
@@ -45,7 +46,7 @@ def parse_query(inspection_json):
 
 
 
-data = parse_data_type(send_request())
+data = parse_query(send_request(url))
 print(data)
 
 ymal = yaml.dump(data)
