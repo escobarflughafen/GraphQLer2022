@@ -1,9 +1,80 @@
 var express = require('express');
 var { graphqlHTTP } = require('express-graphql');
 var { buildSchema } = require('graphql');
+var mysql = require('mysql');
+var con = mysql.createConnection({
+    host: "192.168.10.2",
+    port: "3307",
+    user: "graphql",
+    password: "jE4-Wl5oln",
+    database: "graphQL"
+});
 
-// Construct a schema, using GraphQL schema language
-var schema = buildSchema(`
+con.connect(function(err){
+    if (err) throw err;
+    con.query("SELECT * FROM customers", function (err, result, fields) {
+    if (err) throw err;
+    console.log(result);
+  });
+})
+
+
+/**
+ * Copyright (c) 2015, Facebook, Inc.
+ * All rights reserved.
+ *
+ * This source code is licensed under the license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
+ import {
+    GraphQLSchema,
+    GraphQLObjectType,
+    GraphQLInterfaceType,
+    GraphQLEnumType,
+    GraphQLList,
+    GraphQLNonNull,
+    GraphQLString
+  } from 'graphql';
+  
+  import { makeExecutableSchema } from 'graphql-tools';
+  
+  import { PubSub, SubscriptionManager, withFilter } from 'graphql-subscriptions';
+  
+  const pubsub = new PubSub();
+  const ADDED_REVIEW_TOPIC = 'new_review';
+  
+  const schemaString = `
+  schema {
+    query: Query
+    mutation: Mutation
+    subscription: Subscription
+  }
+
+  # The query type, represents all of the entry points into our object graph
+  type Query {
+    messages: [Message]
+    authors: [Author]
+    getMessage(id: ID!): Message
+    getAuthor(id: ID!): Author
+  }
+
+  # The mutation type, represents all updates we can make to our data
+  type Mutation {
+    createMessage(input: MessageInput): Message
+    createAuthor(input: AuthorInput): Author
+    updateMessage(id: ID!, input: MessageInput): Message
+    updateAuthor(id: ID!, input: AuthorInput): Author
+    deleteMessage(id: ID!): Message
+    deleteAuthor(id: ID!): Author
+  }
+
+  # The subscription type, represents all subscriptions we can make to our data
+  type Subscription {
+  }
+
+
+
   input MessageInput {
     content: String
     authorId: String
@@ -25,135 +96,194 @@ var schema = buildSchema(`
     firstName: String
     lastName: String
   }
+  `;
+  
+  /**
+   * This defines a basic set of data for our Star Wars Schema.
+   *
+   * This data is hard coded for the sake of the demo, but you could imagine
+   * fetching this data from a backend service rather than from hardcoded
+   * JSON objects in a more complex demo.
+   */
+  
+  const messages = [
+    {
+        m_id: '1',
+        content: 'Test Message',
+        author: '1',
+    },
+    {
+        m_id: '2',
+        content: 'Test Message 2',
+        author: '1',
+    },
+    {
+        m_id: '3',
+        content: 'This is another test Message',
+        author: '2',
+    },
+    {
+        m_id: '4',
+        content: 'Test Message',
+        author: '1',
+    },
+  ];
+  
+  const messageData = {};
+  messages.forEach((message) => {
+    messageData[message.m_id] = message;
+  });
+  
+  const authors = [
+    {
+        a_id: '1',
+        firstName: 'Neo',
+        lastName: 'Cheung',
+    },
+    {
+        a_id: '2',
+        firstName: 'Jianing',
+        lastName: 'Li',
+    },
+    {
+        a_id: '3',
+        firstName: 'Lejing',
+        lastName: 'Huang',
+    },
+  ];
+  
+  const authorData = {};
+  authors.forEach((author) => {
+    starshipData[author.a_id] = author;
+  });
 
-  type Query {
-    messages: [Message]
-    authors: [Author]
-    getMessage(id: ID!): Message
-    getAuthor(id: ID!): Author
+
+
+
+  function getMessages() {
+
+    return messageData;
+  }
+  
+  function getAuthors() {
+    return authorData;
+  }
+  
+  function getMessage(m_id) {
+    return messageData.map((msg) => {
+        return {
+            ...msg, author: getAuthor(msg.author)
+        }    
+    })
   }
 
-  type Mutation {
-    createMessage(input: MessageInput): Message
-    createAuthor(input: AuthorInput): Author
-    updateMessage(id: ID!, input: MessageInput): Message
-    updateAuthor(id: ID!, input: AuthorInput): Author
-    deleteMessage(id: ID!): Message
-    deleteAuthor(id: ID!): Author
+  function getAuthor(a_id) {
+    return authorData[a_id];
   }
-`);
-
-// If Message had any complex fields, we'd put them on this object.
-class Message {
-  constructor(id, {content, authorId}) {
-    this.id = id;
-    this.content = content;
-    this.author = authorId
-  }
-}
-
-class Author {
-  constructor(id, {firstName, lastName}) {
-    this.id = id;
-    this.firstName = firstName;
-    this.lastName = lastName;
-  }
-}
-
-// Maps username to content
-var fakeDatabase = [];
-var fakeAuthor = [];
-
-var root = {
-  messages: () => {
-    return fakeDatabase;
-  },
-  authors: () => {
-    return fakeAuthor;
-  },
-  getMessage: ({id}) => {
-    if (fakeDatabase.find(Message => Message.id === id) == null) {
-      throw new Error('no message exists with id ' + id);
-    }
-    var data = fakeDatabase.find(Message => Message.id === id);
-    return {
-      id,
-      ...data,
-      author: {id: data.authorId, ...fakeAuthor.find(Author => Author.id === data.authorId),
+  
+  function createMessage(input) {
+    if (authorData.find(Author => Author.a_id === input.authorId) == null) {
+        throw new Error('no author exists with id ' + id);
       }
-    }
-  },
-  getAuthor: ({id}) => {
-    if (fakeAuthor.find(Author => Author.id === id) == null) {
-      throw new Error('no author exists with id ' + id);
-    }
-    return fakeAuthor.find(Author => Author.id === id);
-  },
-  createMessage: ({input}) => {
-    if (fakeAuthor.find(Author => Author.id === input.authorId) == null) {
-      throw new Error('no author exists with id ' + id);
-    }
-    // Create a random id for our "database".
-    var id = require('crypto').randomBytes(10).toString('hex');
-    var data = {};
-    data.id = id;
-    data.content = input.content;
-    data.authorId
-    fakeDatabase.push(data);
-    return new Message(id, input);
-  },
-  createAuthor: ({input}) => {
+      // Create a random id for our "database".
+      var id = require('crypto').randomBytes(10).toString('hex');
+      var data = {};
+      data.content = input.content;
+      data.authorId = input.authorId;
+      messageData[id] = data;
+      return new Message(id, input);
+  }
+
+  function createAuthor(input) {
     // Create a random id for our "database".
     var id = require('crypto').randomBytes(10).toString('hex');
 
     var data = {};
-    data.id = id;
     data.firstName = input.firstName;
     data.lastName = input.lastName;
-    fakeAuthor.push(data);
+    authorData[id] = data;
     return new Author(id, input);
-  },
-  updateMessage: ({id, input}) => {
-    if (!fakeDatabase[id]) {
-      throw new Error('no message exists with id ' + id);
-    }
-    // This replaces all old data, but some apps might want partial update.
-    fakeDatabase[id] = input;
-    return new Message(id, input);
-  },
-  updateAuthor: ({id, input}) => {
-    if (!fakeAuthor[id]) {
-      throw new Error('no author exists with id ' + id);
-    }
-    // This replaces all old data, but some apps might want partial update.
-    fakeAuthor[id] = input;
-    return new Author(id, input);
-  },
-  deleteMessage: ({id}) => {
-    if (!fakeDatabase[id]) {
-      throw new Error('no message exists with id ' + id);
-    }
-    // This replaces all old data, but some apps might want partial update.
-    delete fakeDatabase[id];
-    return null;
-  },
-  deleteAuthor: ({id}) => {
-    if (!fakeAuthor[id]) {
-      throw new Error('no author exists with id ' + id);
-    }
-    // This replaces all old data, but some apps might want partial update.
-    delete fakeAuthor[id];
-    return null;
-  },
+  }
 
-};
+  function updateMessage (id, input) {
+    if (!messageData[id]) {
+        throw new Error('no message exists with id ' + id);
+      }
+      // This replaces all old data, but some apps might want partial update.
+      messageData[id] = input;
+      return new Message(id, input);
+  }
 
-var app = express();
-app.use('/graphql', graphqlHTTP({
-  schema: schema,
-  rootValue: root,
-  graphiql: true,
-}));
-app.listen(4000, () => {
-  console.log('Running a GraphQL API server at localhost:4000/graphql');
-});
+  function updateAuthor (id, input) {
+    if (!authorData[id]) {
+        throw new Error('no author exists with id ' + id);
+      }
+      // This replaces all old data, but some apps might want partial update.
+      authorData[id] = input;
+      return new Author(id, input);
+  }
+
+  function deleteMessage (id) {
+    if (!messageData[id]) {
+        throw new Error('no message exists with id ' + id);
+      }
+      // This replaces all old data, but some apps might want partial update.
+      delete messageData[id];
+      return null;
+  }
+
+  function deleteAuthor (id) {
+    if (!authorData[id]) {
+        throw new Error('no author exists with id ' + id);
+      }
+      // This replaces all old data, but some apps might want partial update.
+      delete authorData[id];
+      return null;
+  }
+
+
+
+  
+  function toCursor(str) {
+    return Buffer("cursor" + str).toString('base64');
+  }
+  
+  function fromCursor(str) {
+    return Buffer.from(str, 'base64').toString().slice(6);
+  }
+  
+  const resolvers = {
+    Query: {
+      messages: (root) => getMessages(),
+      authors: (root) => getAuthors(),
+      getMessage: (root, { m_id }) => getMessage(m_id),
+      getAuthor: (root, { a_id }) => getAuthor(a_id),
+    },
+    Mutation: {
+      createMessage: (root, { messageInput }) => createMessage(messageInput),
+      createAuthor: (root, { authorInput }) => createAuthor(authorInput),
+      updateMessage: (root, { id, messageInput }) => updateMessage(id, messageInput),
+      updateAuthor: (root, { id, authorInput }) => updateAuthor(id, authorInput),
+      deleteMessage: (root, { id }) => deleteMessage(id),
+      deleteAuthor: (root, { id }) => deleteAuthor(id),
+    },
+    Subscription: {
+      
+    },
+
+
+
+  }
+  
+  /**
+   * Finally, we construct our schema (whose starting query type is the query
+   * type we defined above) and export it.
+   */
+  export const StarWarsSchema = makeExecutableSchema({
+    typeDefs: [schemaString],
+    resolvers
+  });
+  
+
+
+
