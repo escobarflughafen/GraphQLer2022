@@ -1,1 +1,15 @@
+
 test-server/server.js
+
+.DS_Store
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual envrionment
+.venv
+
+# VScode
+.vscode/settings.json
