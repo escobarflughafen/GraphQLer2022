@@ -1,209 +1,136 @@
-import requests, functools, json
 import yaml
 from pprint import pprint
 
-def send_request():
-    url = "http://neogeek.io:4000/graphql"
+from introspection_query import *
 
 
-    body = {
-        "query": """query IntrospectionQuery {
-      __schema {
-
-        queryType { name }
-        mutationType { name }
-        subscriptionType { name }
-        types {
-          ...FullType
-        }
-        directives {
-          name
-          description
-
-          locations
-          args {
-            ...InputValue
-          }
-        }
-      }
-    }
-
-    fragment FullType on __Type {
-      kind
-      name
-      description
-
-      fields(includeDeprecated: true) {
-        name
-        description
-        args {
-          ...InputValue
-        }
-        type {
-          ...TypeRef
-        }
-        isDeprecated
-        deprecationReason
-      }
-      inputFields {
-        ...InputValue
-      }
-      interfaces {
-        ...TypeRef
-      }
-      enumValues(includeDeprecated: true) {
-        name
-        description
-        isDeprecated
-        deprecationReason
-      }
-      possibleTypes {
-        ...TypeRef
-      }
-    }
-
-    fragment InputValue on __InputValue {
-      name
-      description
-      type { ...TypeRef }
-      defaultValue
+def get_type(inspection_param_json):
+	if inspection_param_json["ofType"] is None:
+		return { "kind" : inspection_param_json["kind"], "name" : inspection_param_json["name"] }
+	else:
+		return { "kind" : inspection_param_json["kind"], "name" : inspection_param_json["name"], "ofType" : get_type(inspection_param_json["ofType"])}
 
 
-    }
-
-    fragment TypeRef on __Type {
-      kind
-      name
-      ofType {
-        kind
-        name
-        ofType {
-          kind
-          name
-          ofType {
-            kind
-            name
-            ofType {
-              kind
-              name
-              ofType {
-                kind
-                name
-                ofType {
-                  kind
-                  name
-                  ofType {
-                    kind
-                    name
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-
-        """
-    }
-
-
-    x = requests.post(
-        url=url,
-        json=body
-    )
-
-    return json.loads(x.text)
-
-def recursive_oftype(data):
-  if(data["ofType"] == None):
-    return {"kind" : data["kind"], "name" : data["name"]}
-  else:
-    return {"kind" : data["kind"], "name" : data["name"], "ofType" : recursive_oftype(data["ofType"])}
-
-
+# Parse introspection to generate a YAML grammar file.
 def parse(inspection_json):
-    input_object_list = []
-    object_list = []
-    scalar_list = []
-    enum_list = []
-    query_list = []
-    mutation_list = []
+	object_list = []
+	query_list = []
+	mutation_list = []
 
-    query_type_name = inspection_json["data"]["__schema"]["queryType"]["name"]
-    mutation_type_name = inspection_json["data"]["__schema"]["mutationType"]["name"]
-    type_data = inspection_json["data"]["__schema"]["types"]
+	scalar_list = []
+	enum_list = []
 
-    for d in type_data:
-        if d["kind"] == "INPUT_OBJECT":
-            object = {}
-            object["name"] = d["name"]
-            object["inputFields"] = d["inputFields"]
-            input_object_list.append(object)
-        elif d["kind"] == "OBJECT":
-            if d["name"] == query_type_name:
-                for f in d["fields"]:
-                    object = {}
-                    object["name"] = f["name"]
-                    types = {}
-                    types = recursive_oftype(f["type"])
+	# Get query type name
+	query_type_name = None if inspection_json["data"]["__schema"]["queryType"] is None else inspection_json["data"]["__schema"]["queryType"]["name"]
 
-                    object["produces"] = types
+	# Get mutation type name
+	mutation_type_name = None if inspection_json["data"]["__schema"]["mutationType"] is None else inspection_json["data"]["__schema"]["mutationType"]["name"]
 
-                    object["consumes"] = []
+	# TODO: Get subscription type name
+	subscription_type_name = None if inspection_json["data"]["__schema"]["subscriptionType"] is None else inspection_json["data"]["__schema"]["subscriptionType"]["name"]
 
-                    for a in f["args"]:
-                        arg = {}
-                        arg["name"] = a["name"]
-                        types = {}
-                        types = recursive_oftype(f["type"])
-                        arg["type"] = types
+	type_data = inspection_json["data"]["__schema"]["types"]
 
-                        object["consumes"].append(arg)
+	for d in type_data:
+		# INPUT_OBJECT
+		if d["kind"] == "INPUT_OBJECT":
+			object = {}
+			object_name = d["name"]
+			object_params = {}
+			object_params["params"] = {}
 
-                    query_list.append(object)
-                    '''
-            elif d["name"] == mutation_type_name:
-                for f in d["fields"]:
-                    object = {}
-                    object["name"] = f["name"]
-                    object["type"] = f["type"]
-                    object["args"] = []
+			for f in d["inputFields"]:
+				param_name = f["name"]
+				param_type = {}
+				param_type = get_type(f["type"])
 
-                    for a in f["args"]:
-                        arg = {}
-                        arg["name"] = a["name"]
-                        object["args"].append(arg)
+			  	# Add to the parameter list.
+				object_params["params"][param_name] = param_type
 
-                    mutation_list.append(object)
-            else:
-                object = {}
-                for f in d["fields"]:
-                    object["name"] = f["name"]
-                    object["type"] = f["type"]["kind"]
-                object_list.append(object)
-                '''
-        elif d["kind"] == "SCALAR":
-            scalar_list.append(d)
-        elif d["kind"] == "ENUM":
-            enum_list.append(d)
+			object[object_name] = object_params
+			object_list.append(object)
 
-    return input_object_list, object_list, scalar_list, enum_list, query_list, mutation_list
+		elif d["kind"] == "OBJECT":
+			# QUERY
+			if d["name"] == query_type_name:
+				for f in d["fields"]:
+					object = {}
+					object["name"] = f["name"]
+					types = {}
+					types = get_type(f["type"])
 
+					object["produces"] = types
+
+					object["consumes"] = []
+
+					for a in f["args"]:
+						arg = {}
+						arg["name"] = a["name"]
+						types = {}
+						types = get_type(f["type"])
+						arg["type"] = types
+
+						object["consumes"].append(arg)
+
+					query_list.append(object)
+			
+			# MUTATION
+			elif d["name"] == mutation_type_name:
+				'''
+				elif d["name"] == mutation_type_name:
+				for f in d["fields"]:
+					object = {}
+					object["name"] = f["name"]
+					object["type"] = f["type"]
+					object["args"] = []
+
+					for a in f["args"]:
+						arg = {}
+						arg["name"] = a["name"]
+						object["args"].append(arg)
+
+					mutation_list.append(object)
+			
+				'''
+
+			# DATA_TYPE: Filter out multation & query & subscription & introspection system object.
+			elif d["name"] != subscription_type_name and d["name"][:2] != "__":
+				object = {}
+				object_name = d["name"]
+				object_params = {}
+				object_params["params"] = {}
+
+				for f in d["fields"]:
+					param_name = f["name"]
+					param_type = {}
+					param_type = get_type(f["type"])
+
+					# Add to the parameter list.
+					object_params["params"][param_name] = param_type
+
+				object[object_name] = object_params
+				object_list.append(object)
+
+		elif d["kind"] == "SCALAR":
+			scalar_list.append(d)
+		elif d["kind"] == "ENUM":
+			enum_list.append(d)
+
+	return object_list, query_list, mutation_list, scalar_list, enum_list
 
 
 data = parse(send_request())
-pprint(data)
 
+# TEST
+# print(data[1])
 
-test = yaml.dump(data)
+file = open("grammar.yml", "w")
+
+yaml.dump({"DataTypes": data[0], "Queries": data[1], "Mutations": data[2]}, file)
+
+# TEST
+test = yaml.dump(data[2])
 print(test)
 
-
-
-
-
-
-
-
-
+## TODO: 1. query - consume - produce?? type
+## TODO: 2. 

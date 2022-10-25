@@ -1,6 +1,8 @@
-import requests, functools, json
+import requests, json
 
-def send_request(url):
+URL = "http://neogeek.io:4000/graphql"
+
+def send_request():
 
 	body = {
 		"query": """query IntrospectionQuery {
@@ -106,7 +108,7 @@ def send_request(url):
 	}
 
 	x = requests.post(
-		url=url,
+		url=URL,
 		json=body
 	)
 	return json.loads(x.text)

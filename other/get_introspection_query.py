@@ -9,6 +9,7 @@ def get_type(inspection_param_json):
     else:
         return { "kind" : inspection_param_json["kind"], "name" : inspection_param_json["name"], "ofType" : get_type(inspection_param_json["ofType"])}
 
+
 def parse_query(inspection_json):
 
     query_list = []
@@ -43,7 +44,6 @@ def parse_query(inspection_json):
                     query_list.append(object)
 
     return query_list
-
 
 
 data = parse_query(send_request(url))
