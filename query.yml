@@ -19,8 +19,11 @@ produces:
 consumes:
 - name: id
   type:
-    kind: OBJECT
-    name: Message
+    kind: NON_NULL
+    name: null
+    ofType:
+      kind: SCALAR
+      name: ID
 name: getMessage
 produces:
   kind: OBJECT
@@ -29,8 +32,11 @@ produces:
 consumes:
 - name: id
   type:
-    kind: OBJECT
-    name: Author
+    kind: NON_NULL
+    name: null
+    ofType:
+      kind: SCALAR
+      name: ID
 name: getAuthor
 produces:
   kind: OBJECT
