@@ -1,11 +1,8 @@
-
 import requests
 
 URL = "http://neogeek.io:4000/graphql"
 
-
-
-def query(query, url=URL):
+def gql_query(query, url=URL):
     body = {
       "query": query 
     }
@@ -13,3 +10,4 @@ def query(query, url=URL):
     res = requests.post(url, body)
 
     return res.text
+
