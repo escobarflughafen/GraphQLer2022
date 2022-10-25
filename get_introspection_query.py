@@ -51,3 +51,6 @@ print(data)
 
 ymal = yaml.dump(data)
 print(ymal)
+
+file = open("query.yml", "w")
+yaml.dump_all(data, file)
