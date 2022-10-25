@@ -154,7 +154,7 @@ con.connect(function(err){
   
   const authorData = {};
   authors.forEach((author) => {
-    starshipData[author.a_id] = author;
+    authorData[author.a_id] = author;
   });
 
 
