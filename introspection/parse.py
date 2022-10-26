@@ -7,6 +7,7 @@ import connect
 import pathlib
 import os
 
+
 def get_type(typedef):
     if typedef["ofType"] == None:
         return {
@@ -186,15 +187,24 @@ def parse_mutation(introspection_json):
 
     return mutation_list
 
-def parse_dependency(data_types, queries, mutations):
-  
 
+def parse_dependency(data_types, queries, mutations):
+    counter = 1
+    type_action_lookup = {
+      
+    }
+    
+    while counter > 0:
+        for i in range(len(mutations)):
+          if mutations[i]["action_type"] == "CREATE":
+            
+              
 
 def generate_grammar_file(path, data_types, queries, mutations):
     if os.path.exists(path):
         raise Exception("File has already existed.")
-    
-    f = open(path, 'w') 
+
+    f = open(path, 'w')
 
     grammer = {
         "DataTypes": data_types,
@@ -205,8 +215,6 @@ def generate_grammar_file(path, data_types, queries, mutations):
     yaml.dump(grammer, f)
     f.close()
 
-    
-
 
 if __name__ == "__main__":
     introspection_json = connect.get_introspection(
@@ -216,9 +224,8 @@ if __name__ == "__main__":
     query_list = parse_query(introspection_json)
     mutation_list = parse_mutation(introspection_json)
 
-    generate_grammar_file('./grammer.yaml', object_type_list, query_list, mutation_list)
-    
-
+    generate_grammar_file(
+        './grammer.yaml', object_type_list, query_list, mutation_list)
 
     print(json.dumps(object_type_list, indent=2))
     print(json.dumps(query_list, indent=2))

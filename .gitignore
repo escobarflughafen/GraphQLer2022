@@ -1,4 +1,9 @@
 
+<<<<<<< HEAD
+=======
+test-server/server.js
+
+>>>>>>> b48bef269775b1d2b86c9c413579c0ff74d971e2
 .DS_Store
 
 # Byte-compiled / optimized / DLL files
@@ -10,4 +15,8 @@ __pycache__/
 .venv
 
 # VScode
+<<<<<<< HEAD
 .vscode/settings.json
+=======
+.vscode/settings.json
+>>>>>>> b48bef269775b1d2b86c9c413579c0ff74d971e2

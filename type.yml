@@ -1,0 +1,224 @@
+Human:
+  params:
+    appearsIn:
+      kind: NON_NULL
+      name: null
+      ofType:
+        kind: LIST
+        name: null
+        ofType:
+          kind: ENUM
+          name: Episode
+    friends:
+      kind: LIST
+      name: null
+      ofType:
+        kind: INTERFACE
+        name: Character
+    friendsConnection:
+      kind: NON_NULL
+      name: null
+      ofType:
+        kind: OBJECT
+        name: FriendsConnection
+    height:
+      kind: SCALAR
+      name: Float
+    homePlanet:
+      kind: SCALAR
+      name: String
+    id:
+      kind: NON_NULL
+      name: null
+      ofType:
+        kind: SCALAR
+        name: ID
+    mass:
+      kind: SCALAR
+      name: Float
+    name:
+      kind: NON_NULL
+      name: null
+      ofType:
+        kind: SCALAR
+        name: String
+    starships:
+      kind: LIST
+      name: null
+      ofType:
+        kind: OBJECT
+        name: Starship
+---
+Droid:
+  params:
+    appearsIn:
+      kind: NON_NULL
+      name: null
+      ofType:
+        kind: LIST
+        name: null
+        ofType:
+          kind: ENUM
+          name: Episode
+    friends:
+      kind: LIST
+      name: null
+      ofType:
+        kind: INTERFACE
+        name: Character
+    friendsConnection:
+      kind: NON_NULL
+      name: null
+      ofType:
+        kind: OBJECT
+        name: FriendsConnection
+    id:
+      kind: NON_NULL
+      name: null
+      ofType:
+        kind: SCALAR
+        name: ID
+    name:
+      kind: NON_NULL
+      name: null
+      ofType:
+        kind: SCALAR
+        name: String
+    primaryFunction:
+      kind: SCALAR
+      name: String
+---
+FriendsConnection:
+  params:
+    edges:
+      kind: LIST
+      name: null
+      ofType:
+        kind: OBJECT
+        name: FriendsEdge
+    friends:
+      kind: LIST
+      name: null
+      ofType:
+        kind: INTERFACE
+        name: Character
+    pageInfo:
+      kind: NON_NULL
+      name: null
+      ofType:
+        kind: OBJECT
+        name: PageInfo
+    totalCount:
+      kind: SCALAR
+      name: Int
+---
+FriendsEdge:
+  params:
+    cursor:
+      kind: NON_NULL
+      name: null
+      ofType:
+        kind: SCALAR
+        name: ID
+    node:
+      kind: INTERFACE
+      name: Character
+---
+PageInfo:
+  params:
+    endCursor:
+      kind: SCALAR
+      name: ID
+    hasNextPage:
+      kind: NON_NULL
+      name: null
+      ofType:
+        kind: SCALAR
+        name: Boolean
+    startCursor:
+      kind: SCALAR
+      name: ID
+---
+Review:
+  params:
+    commentary:
+      kind: SCALAR
+      name: String
+    episode:
+      kind: ENUM
+      name: Episode
+    stars:
+      kind: NON_NULL
+      name: null
+      ofType:
+        kind: SCALAR
+        name: Int
+---
+ReviewInput:
+  params:
+    commentary:
+      kind: SCALAR
+      name: String
+    favorite_color:
+      kind: INPUT_OBJECT
+      name: ColorInput
+    stars:
+      kind: NON_NULL
+      name: null
+      ofType:
+        kind: SCALAR
+        name: Int
+---
+ColorInput:
+  params:
+    blue:
+      kind: NON_NULL
+      name: null
+      ofType:
+        kind: SCALAR
+        name: Int
+    green:
+      kind: NON_NULL
+      name: null
+      ofType:
+        kind: SCALAR
+        name: Int
+    red:
+      kind: NON_NULL
+      name: null
+      ofType:
+        kind: SCALAR
+        name: Int
+---
+Starship:
+  params:
+    coordinates:
+      kind: LIST
+      name: null
+      ofType:
+        kind: NON_NULL
+        name: null
+        ofType:
+          kind: LIST
+          name: null
+          ofType:
+            kind: NON_NULL
+            name: null
+            ofType:
+              kind: SCALAR
+              name: Float
+    id:
+      kind: NON_NULL
+      name: null
+      ofType:
+        kind: SCALAR
+        name: ID
+    length:
+      kind: SCALAR
+      name: Float
+    name:
+      kind: NON_NULL
+      name: null
+      ofType:
+        kind: SCALAR
+        name: String
