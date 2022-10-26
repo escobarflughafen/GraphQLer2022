@@ -111,7 +111,7 @@ def parse_query(introspection_json):
                         arg = {}
                         arg["name"] = a["name"]
                         types = {}
-                        types = get_type(f["type"])
+                        types = get_type(a["type"])
                         arg["type"] = types
 
                         object["consumes"].append(arg)
@@ -187,6 +187,11 @@ def parse_mutation(introspection_json):
 
     return mutation_list
 
+<<<<<<< HEAD
+=======
+#def parse_dependency(data_types, queries, mutations):
+  
+>>>>>>> main
 
 def parse_dependency(data_types, queries, mutations):
     counter = 1
