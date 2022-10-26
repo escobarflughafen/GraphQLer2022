@@ -4,6 +4,8 @@ import json
 import yaml
 from pprint import pprint
 import connect
+import pathlib
+import os
 
 def get_type(typedef):
     if typedef["ofType"] == None:
@@ -27,8 +29,9 @@ def get_type(typedef):
                 "ofType": get_type(typedef["ofType"])
             }
 
+
 def parse_data_type(inspection_json):
-    
+
     object_list = []
 
     # Get query type name
@@ -85,7 +88,7 @@ def parse_data_type(inspection_json):
 def parse_query(introspection_json):
     query_list = []
 
-	# Get query type name
+    # Get query type name
     query_type_name = introspection_json["data"]["__schema"]["queryType"]["name"]
 
     type_data = introspection_json["data"]["__schema"]["types"]
@@ -115,7 +118,7 @@ def parse_query(introspection_json):
                     query_list.append(object)
 
     return query_list
-    
+
 
 def get_name(raw_introspection):
     return raw_introspection["name"]
@@ -159,16 +162,16 @@ def get_action_type(args):
 
     return "OTHER"
 
+
 def parse_mutation(introspection_json):
     mutation_list = []
     raw_mutation_list = []
-    
+
     mutation_type_name = introspection_json["data"]["__schema"]["mutationType"]["name"]
 
     for _ in introspection_json["data"]["__schema"]["types"]:
         if _["name"] == mutation_type_name:
             raw_mutation_list = _["fields"]
-
 
     for raw_mutation in raw_mutation_list:
         mutation = {
@@ -178,28 +181,51 @@ def parse_mutation(introspection_json):
         }
 
         mutation["action_type"] = get_action_type(mutation["args"])
-        
+
         mutation_list.append(mutation)
-    
+
     return mutation_list
+
+def parse_dependency(data_types, queries, mutations):
   
 
 
+def generate_grammar_file(path, data_types, queries, mutations):
+    if os.path.exists(path):
+        raise Exception("File has already existed.")
+    
+    f = open(path, 'w') 
+
+    grammer = {
+        "DataTypes": data_types,
+        "Queries": queries,
+        "Mutations": mutations
+    }
+
+    yaml.dump(grammer, f)
+    f.close()
+
+    
+
+
 if __name__ == "__main__":
-    introspection_json = connect.get_introspection(url="http://neogeek.io:4000/graphql")
+    introspection_json = connect.get_introspection(
+        url="http://neogeek.io:4000/graphql")
 
     object_type_list = parse_data_type(introspection_json)
     query_list = parse_query(introspection_json)
     mutation_list = parse_mutation(introspection_json)
 
+    generate_grammar_file('./grammer.yaml', object_type_list, query_list, mutation_list)
+    
+
+
     print(json.dumps(object_type_list, indent=2))
     print(json.dumps(query_list, indent=2))
     print(json.dumps(mutation_list, indent=2))
-    
+
     '''
     yaml.dump(object_type_list, open("./object_type_list.yml", "w"))
     yaml.dump(query_list, open("./query_list.yml", "w"))
     yaml.dump(mutation_list, open("./mutation_list.yml", "w"))
     '''
-    
-    

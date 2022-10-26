@@ -1,0 +1,163 @@
+DataTypes:
+- MessageInput:
+    params:
+      authorId:
+        kind: SCALAR
+        name: String
+      content:
+        kind: SCALAR
+        name: String
+- AuthorInput:
+    params:
+      firstName:
+        kind: SCALAR
+        name: String
+      lastName:
+        kind: SCALAR
+        name: String
+- Message:
+    params:
+      author:
+        kind: OBJECT
+        name: Author
+      content:
+        kind: SCALAR
+        name: String
+      id:
+        kind: SCALAR
+        name: ID
+        nonNull: true
+- Author:
+    params:
+      firstName:
+        kind: SCALAR
+        name: String
+      id:
+        kind: SCALAR
+        name: ID
+        nonNull: true
+      lastName:
+        kind: SCALAR
+        name: String
+Mutations:
+- action_type: CREATE
+  args:
+  - defaultValue: null
+    name: input
+    type:
+      kind: INPUT_OBJECT
+      name: MessageInput
+  name: createMessage
+  return_type:
+    kind: OBJECT
+    name: Message
+    ofType: null
+- action_type: CREATE
+  args:
+  - defaultValue: null
+    name: input
+    type:
+      kind: INPUT_OBJECT
+      name: AuthorInput
+  name: createAuthor
+  return_type:
+    kind: OBJECT
+    name: Author
+    ofType: null
+- action_type: UPDATE
+  args:
+  - defaultValue: null
+    name: id
+    type:
+      kind: SCALAR
+      name: ID
+      nonNull: true
+  - defaultValue: null
+    name: input
+    type:
+      kind: INPUT_OBJECT
+      name: MessageInput
+  name: updateMessage
+  return_type:
+    kind: OBJECT
+    name: Message
+    ofType: null
+- action_type: UPDATE
+  args:
+  - defaultValue: null
+    name: id
+    type:
+      kind: SCALAR
+      name: ID
+      nonNull: true
+  - defaultValue: null
+    name: input
+    type:
+      kind: INPUT_OBJECT
+      name: AuthorInput
+  name: updateAuthor
+  return_type:
+    kind: OBJECT
+    name: Author
+    ofType: null
+- action_type: DELETE
+  args:
+  - defaultValue: null
+    name: id
+    type:
+      kind: SCALAR
+      name: ID
+      nonNull: true
+  name: deleteMessage
+  return_type:
+    kind: OBJECT
+    name: Message
+    ofType: null
+- action_type: DELETE
+  args:
+  - defaultValue: null
+    name: id
+    type:
+      kind: SCALAR
+      name: ID
+      nonNull: true
+  name: deleteAuthor
+  return_type:
+    kind: OBJECT
+    name: Author
+    ofType: null
+Queries:
+- consumes: []
+  name: messages
+  produces:
+    kind: LIST
+    name: null
+    ofType:
+      kind: OBJECT
+      name: Message
+- consumes: []
+  name: authors
+  produces:
+    kind: LIST
+    name: null
+    ofType:
+      kind: OBJECT
+      name: Author
+- consumes:
+  - name: id
+    type:
+      kind: OBJECT
+      name: Message
+  name: getMessage
+  produces:
+    kind: OBJECT
+    name: Message
+- consumes:
+  - name: id
+    type:
+      kind: OBJECT
+      name: Author
+  name: getAuthor
+  produces:
+    kind: OBJECT
+    name: Author
