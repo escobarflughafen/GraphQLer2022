@@ -1,0 +1,86 @@
+- action_type: CREATE
+  args:
+  - defaultValue: null
+    name: input
+    type:
+      kind: INPUT_OBJECT
+      name: MessageInput
+  name: createMessage
+  return_type:
+    kind: OBJECT
+    name: Message
+    ofType: null
+- action_type: CREATE
+  args:
+  - defaultValue: null
+    name: input
+    type:
+      kind: INPUT_OBJECT
+      name: AuthorInput
+  name: createAuthor
+  return_type:
+    kind: OBJECT
+    name: Author
+    ofType: null
+- action_type: UPDATE
+  args:
+  - defaultValue: null
+    name: id
+    type:
+      kind: SCALAR
+      name: ID
+      nonNull: true
+  - defaultValue: null
+    name: input
+    type:
+      kind: INPUT_OBJECT
+      name: MessageInput
+  name: updateMessage
+  return_type:
+    kind: OBJECT
+    name: Message
+    ofType: null
+- action_type: UPDATE
+  args:
+  - defaultValue: null
+    name: id
+    type:
+      kind: SCALAR
+      name: ID
+      nonNull: true
+  - defaultValue: null
+    name: input
+    type:
+      kind: INPUT_OBJECT
+      name: AuthorInput
+  name: updateAuthor
+  return_type:
+    kind: OBJECT
+    name: Author
+    ofType: null
+- action_type: DELETE
+  args:
+  - defaultValue: null
+    name: id
+    type:
+      kind: SCALAR
+      name: ID
+      nonNull: true
+  name: deleteMessage
+  return_type:
+    kind: OBJECT
+    name: Message
+    ofType: null
+- action_type: DELETE
+  args:
+  - defaultValue: null
+    name: id
+    type:
+      kind: SCALAR
+      name: ID
+      nonNull: true
+  name: deleteAuthor
+  return_type:
+    kind: OBJECT
+    name: Author
+    ofType: null
