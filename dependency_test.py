@@ -1,7 +1,7 @@
 import yaml
 from pprint import pprint
-import get_introspection
-import introspection_query
+import other.get_introspection as get_introspection
+import other.introspection_query as introspection_query
 
 
 # TODO: 1. REWRITE OUTPUT FORMAT. 

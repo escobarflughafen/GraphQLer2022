@@ -1,6 +1,6 @@
 import yaml
 
-from introspection_query import *
+from other.introspection_query import *
 
 
 def parse_data_type(inspection_json):

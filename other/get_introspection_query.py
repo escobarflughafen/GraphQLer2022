@@ -1,4 +1,4 @@
-from introspection_query import * 
+from other.introspection_query import * 
 import yaml
 
 url = "http://neogeek.io:4000/graphql"

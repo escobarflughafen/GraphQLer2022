@@ -1,7 +1,7 @@
 import yaml
 from pprint import pprint
 
-from introspection_query import *
+from other.introspection_query import *
 
 
 def get_type(inspection_param_json):
