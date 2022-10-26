@@ -2,7 +2,7 @@ import requests, json
 
 URL = "http://neogeek.io:4000/graphql"
 
-def send_request():
+def send_request(url="http://neogeek.io:4000/graphql"):
 
 	body = {
 		"query": """query IntrospectionQuery {

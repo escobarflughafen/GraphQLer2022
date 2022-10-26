@@ -130,7 +130,4 @@ yaml.dump({"DataTypes": data[0], "Queries": data[1], "Mutations": data[2]}, file
 
 # TEST
 test = yaml.dump(data[2])
-print(test)
-
-## TODO: 1. query - consume - produce?? type
-## TODO: 2. 
+# print(test)
