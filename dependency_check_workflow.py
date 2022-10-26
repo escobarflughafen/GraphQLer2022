@@ -1,3 +1,4 @@
+from calendar import day_abbr
 from random import random
 import requests, json
 import introspection.connect as connect
@@ -46,7 +47,15 @@ def build_query_string(json_string, dbdata = {}):
             inner_json[arg["name"]] = dbdata[arg["name"]] if dbdata.get(arg["name"]) != None else fuzz_scalar(data_type["name"])
         else:
             inner_json[arg["name"]] = build_object(search_object(data_type_json, data_type["name"]))
-    query += re.sub(r'(?<!: )"(\S*?)"', '\\1' ,json.dumps(inner_json)[1:-1]) + ")}"
+    query += re.sub(r'(?<!: )"(\S*?)"', '\\1' ,json.dumps(inner_json)[1:-1]) + ")"
+    
+    data_type = get_type(json_string["produces"])
+    if data_type["kind"] == "SCALAR":
+        query += data_type["name"] + " " # it seems no SCALAR will exists in the first layer so this line will never run, anyways this line of code is broken
+    else:
+        query += build_return_object(search_object(data_type_json, data_type["name"]))
+
+    query += "}"
     return query
 
 
@@ -59,7 +68,16 @@ def build_mutation_string(json_string, dbdata = {}):
             inner_json[arg["name"]] = dbdata[arg["name"]] if dbdata.get(arg["name"]) != None else fuzz_scalar(data_type["name"])
         else:
             inner_json[arg["name"]] = build_object(search_object(data_type_json, data_type["name"]))
-    query += re.sub(r'(?<!: )"(\S*?)"', '\\1' ,json.dumps(inner_json)[1:-1]) + ")}"
+    query += re.sub(r'(?<!: )"(\S*?)"', '\\1' ,json.dumps(inner_json)[1:-1]) + ")"
+    
+    data_type = get_type(json_string["return_type"])
+    if data_type["kind"] == "SCALAR":
+        query += data_type["name"] + " " # it seems no SCALAR will exists in the first layer so this line will never run, anyways this line of code is broken
+    else:
+        query += build_return_object(search_object(data_type_json, data_type["name"]))
+
+    query += "}"
+    
     return query
 
 
@@ -81,6 +99,18 @@ def build_object(object):
         else:
             inner_json[arg[0]] = build_object(search_object(data_type_json, data_type["name"]))
     return inner_json
+
+def build_return_object(object):
+    inner_string = " { "
+    for arg in object["params"].items():
+        data_type = get_type(arg[1])
+        if data_type["kind"] == "SCALAR":
+            inner_string += arg[0] + " "
+        else:
+            inner_string += arg[0] + build_return_object(search_object(data_type_json, data_type["name"]))
+    inner_string += " } "
+    return inner_string
+    
 
 
 
@@ -140,9 +170,9 @@ def dependency_check(datatypes):
         queryString = build_query_string(forth_query, datadb)
         forth_result = send_request(url, queryString)
 
-        if second_result.get("message") == None and forth_result.get("message") != None:
+        if second_result.get("errors") == None and forth_result.get("errors") != None:
             a=a# the resource has been deleted, write back delete
-        elif second_result.get("message") == None and forth_result.get("message") == None:
+        elif second_result.get("errors") == None and forth_result.get("errors") == None:
             a=a# the resource is not deleted, probably update
 
 
