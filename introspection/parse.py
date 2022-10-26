@@ -186,7 +186,7 @@ def parse_mutation(introspection_json):
 
     return mutation_list
 
-def parse_dependency(data_types, queries, mutations):
+#def parse_dependency(data_types, queries, mutations):
   
 
 

@@ -1,4 +1,4 @@
-from introspection_query import * 
+from other.introspection_query import * 
 import yaml
 
 url = "http://neogeek.io:4000/graphql"
@@ -8,6 +8,7 @@ def get_type(inspection_param_json):
         return { "kind" : inspection_param_json["kind"], "name" : inspection_param_json["name"] }
     else:
         return { "kind" : inspection_param_json["kind"], "name" : inspection_param_json["name"], "ofType" : get_type(inspection_param_json["ofType"])}
+
 
 def parse_query(inspection_json):
 
@@ -43,7 +44,6 @@ def parse_query(inspection_json):
                     query_list.append(object)
 
     return query_list
-
 
 
 data = parse_query(send_request(url))
