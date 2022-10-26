@@ -1,4 +1,3 @@
-from calendar import day_abbr
 from random import random
 import requests, json
 import introspection.connect as connect
@@ -19,6 +18,7 @@ data_type_json = parse.parse_data_type(connect.get_introspection(url="http://neo
 test_json = {'name': 'getMessage', 'produces': {'kind': 'OBJECT', 'name': 'Message'}, 'consumes': [{'name': 'id', 'type': {'kind': 'SCALAR', 'name': 'ID', 'nonNull': True}}]}
 test_json2 = {'name': 'createMessage', 'args': [{'name': 'input', 'type': {'kind': 'INPUT_OBJECT', 'name': 'MessageInput'}, 'defaultValue': None}], 'return_type': {'kind': 'OBJECT', 'name': 'Message', 'ofType': None}, 'action_type': 'CREATE'}
 
+# To generate a pre-defined random value to the input
 def fuzz_scalar(kind):
     if kind == "String":
         return random.choice(fuzz_string)
@@ -31,13 +31,15 @@ def fuzz_scalar(kind):
     elif kind == "ID":
         return random.choice(fuzz_id)
 
+# To get the last type which usually indicates the real basic type
 def get_type(type):
     if type["name"] == None:
         return get_type(type["ofType"])
     else:
         return type
 
-
+# Build the query string based on the given schema of a Query (in JSON)
+# If there's no database input, it will randomly generate the value
 def build_query_string(json_string, dbdata = {}):
     inner_json = {}
     query = "{" + json_string["name"] + "("
@@ -47,6 +49,7 @@ def build_query_string(json_string, dbdata = {}):
             inner_json[arg["name"]] = dbdata[arg["name"]] if dbdata.get(arg["name"]) != None else fuzz_scalar(data_type["name"])
         else:
             inner_json[arg["name"]] = build_object(search_object(data_type_json, data_type["name"]))
+    # Remove the double quote for key but not the value (since GraphQL query did not like it)
     query += re.sub(r'(?<!: )"(\S*?)"', '\\1' ,json.dumps(inner_json)[1:-1]) + ")"
     
     data_type = get_type(json_string["produces"])
@@ -58,7 +61,8 @@ def build_query_string(json_string, dbdata = {}):
     query += "}"
     return query
 
-
+# Build the mutation string based on the given schema of a Mutation (in JSON)
+# If there's no database input, it will randomly generate the value
 def build_mutation_string(json_string, dbdata = {}):
     inner_json = {}
     query = "mutation {" + json_string["name"] + "("
@@ -68,6 +72,7 @@ def build_mutation_string(json_string, dbdata = {}):
             inner_json[arg["name"]] = dbdata[arg["name"]] if dbdata.get(arg["name"]) != None else fuzz_scalar(data_type["name"])
         else:
             inner_json[arg["name"]] = build_object(search_object(data_type_json, data_type["name"]))
+    # Remove the double quote for key but not the value (since GraphQL query did not like it)
     query += re.sub(r'(?<!: )"(\S*?)"', '\\1' ,json.dumps(inner_json)[1:-1]) + ")"
     
     data_type = get_type(json_string["return_type"])
@@ -80,16 +85,15 @@ def build_mutation_string(json_string, dbdata = {}):
     
     return query
 
-
+# take the object name and search from the Datatype area, return the schema of the Datatype (in JSON)
 def search_object(object_json, object_name):
     for item in object_json:
         if item.get(object_name) != None:
             print(item.get(object_name))
             return item[object_name]
 
-            #item
 
-
+# Build the object JSON structure
 def build_object(object):
     inner_json = {}
     for arg in object["params"].items():
@@ -100,6 +104,7 @@ def build_object(object):
             inner_json[arg[0]] = build_object(search_object(data_type_json, data_type["name"]))
     return inner_json
 
+# To build the return area of the query/mutation string
 def build_return_object(object):
     inner_string = " { "
     for arg in object["params"].items():
