@@ -1,24 +1,22 @@
-from ast import Delete
-from distutils.command.build import build
 from random import random
-from readline import append_history_file
-from turtle import update
-import requests, functools, json
-
-from get_introspection_type import parse_data_type
+import requests, json
+import introspection.connect as connect
+import introspection.parse as parse
+import random
+import re
 
 
 datadb = {}
 fuzz_int = [0,1,-1]
-fuzz_string = ["wfr23","@$@UD@", " "]
+fuzz_string = ["wfr23","@$@UD@", "7h "]
 fuzz_float = [12.123, 141.123124, .124]
 fuzz_bool = ['false', 'true']
 fuzz_id = ["14314", "qrqf2132", "@(Q@QQD"]
 
-data_type_json = parse_data_type(connect.get_introspection(url="http://neogeek.io:4000/graphql"))
+data_type_json = parse.parse_data_type(connect.get_introspection(url="http://neogeek.io:4000/graphql"))
 
-test_json = {"name": "getMessage", "produces": {"kind": "OBJECT", "name": "Message"}, "consumes": [{"name": "id", "type": {"kind": "NON_NULL", "name": null, "ofType": {"kind": "SCALAR", "name": "ID"}}}]}
-test_object_list = {}
+test_json = {'name': 'getMessage', 'produces': {'kind': 'OBJECT', 'name': 'Message'}, 'consumes': [{'name': 'id', 'type': {'kind': 'SCALAR', 'name': 'ID', 'nonNull': True}}]}
+test_json2 = {'name': 'createMessage', 'args': [{'name': 'input', 'type': {'kind': 'INPUT_OBJECT', 'name': 'MessageInput'}, 'defaultValue': None}], 'return_type': {'kind': 'OBJECT', 'name': 'Message', 'ofType': None}, 'action_type': 'CREATE'}
 
 def fuzz_scalar(kind):
     if kind == "String":
@@ -39,31 +37,49 @@ def get_type(type):
         return type
 
 
-def build_query_string(json_string):
+def build_query_string(json_string, dbdata = {}):
     inner_json = {}
     query = "{" + json_string["name"] + "("
     for arg in json_string["consumes"]:
-        data_type = get_type(arg)
+        data_type = get_type(arg["type"])
         if data_type["kind"] == "SCALAR":
-            inner_json[arg["name"]] = fuzz_scalar(data_type["name"])
+            inner_json[arg["name"]] = dbdata[arg["name"]] if dbdata.get(arg["name"]) != None else fuzz_scalar(data_type["name"])
         else:
             inner_json[arg["name"]] = build_object(search_object(data_type_json, data_type["name"]))
-    query += json.dumps(inner_json) + ")\{\}\}"
+    query += re.sub(r'(?<!: )"(\S*?)"', '\\1' ,json.dumps(inner_json)[1:-1]) + ")}"
+    return query
+
+
+def build_mutation_string(json_string, dbdata = {}):
+    inner_json = {}
+    query = "mutation {" + json_string["name"] + "("
+    for arg in json_string["args"]:
+        data_type = get_type(arg["type"])
+        if data_type["kind"] == "SCALAR":
+            inner_json[arg["name"]] = dbdata[arg["name"]] if dbdata.get(arg["name"]) != None else fuzz_scalar(data_type["name"])
+        else:
+            inner_json[arg["name"]] = build_object(search_object(data_type_json, data_type["name"]))
+    query += re.sub(r'(?<!: )"(\S*?)"', '\\1' ,json.dumps(inner_json)[1:-1]) + ")}"
     return query
 
 
 def search_object(object_json, object_name):
-    return object_json[object_name]
+    for item in object_json:
+        if item.get(object_name) != None:
+            print(item.get(object_name))
+            return item[object_name]
+
+            #item
 
 
 def build_object(object):
     inner_json = {}
-    for arg in object["params"]:
-        data_type = get_type(arg)
+    for arg in object["params"].items():
+        data_type = get_type(arg[1])
         if data_type["kind"] == "SCALAR":
-            inner_json[arg["name"]] = fuzz_scalar(data_type["name"])
+            inner_json[arg[0]] = fuzz_scalar(data_type["name"])
         else:
-            inner_json[arg["name"]] = build_object(search_object(data_type_json, data_type["name"]))
+            inner_json[arg[0]] = build_object(search_object(data_type_json, data_type["name"]))
     return inner_json
 
 
@@ -81,29 +97,52 @@ def send_request(url, query):
 	)
     return json.loads(x.text)
 
-def dependency_check():
+
+
+if __name__ == "__main__":
+    test = build_query_string(test_json)
+    test2 = build_mutation_string(test_json2)
+    print(test)
+    url="http://neogeek.io:4000/graphql"
+    result = send_request(url, test)
+    result2 = send_request(url, test2)
+    print(result)
+    print(result2)
+
+
+def get_query():
+    return
+
+def get_mutation():
+    return
+
+def get_mutation_with_input_type(datatype):
+    return
+
+
+
+def dependency_check(datatypes):
     for datatype in datatypes:
         first_mutation = get_mutation_with_input_type(datatype)
-        queryString = build_query_string_input(first_mutation)
+        queryString = build_query_string(first_mutation)
         first_result = send_request(url, queryString)
         datadb[datatype] = result.data
 
         second_query = get_query(datatype)
-        queryString = build_query_string_with_data(second_query, datadb)
+        queryString = build_query_string(second_query, datadb)
         second_result = send_request(url, queryString)
 
         thrid_query = get_mutation(datatype)
-        queryString = build_query_string_with_data(thrid_query, datadb)
+        queryString = build_query_string(thrid_query, datadb)
         thrid_result = send_request(url, queryString)
 
         forth_query = get_query(datatype)
-        queryString = build_query_string_with_data(forth_query, datadb)
+        queryString = build_query_string(forth_query, datadb)
         forth_result = send_request(url, queryString)
 
-        if second_result == 200 and forth_result == 200:
-            writeback update
-        elif second_result == 200 and forth_result == 400:
-            writeback delete
-            delete datadb[datatype]
+        if second_result.get("message") == None and forth_result.get("message") != None:
+            a=a# the resource has been deleted, write back delete
+        elif second_result.get("message") == None and forth_result.get("message") == None:
+            a=a# the resource is not deleted, probably update
 
 
