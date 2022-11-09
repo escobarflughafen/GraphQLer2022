@@ -1,0 +1,270 @@
+{
+    "DataTypes": [
+        {
+            "MessageInput": {
+                "params": {
+                    "content": {
+                        "kind": "SCALAR",
+                        "name": "String"
+                    },
+                    "authorId": {
+                        "kind": "SCALAR",
+                        "name": "String"
+                    }
+                }
+            },
+            "kind": "INPUT_OBJECT"
+        },
+        {
+            "AuthorInput": {
+                "params": {
+                    "firstName": {
+                        "kind": "SCALAR",
+                        "name": "String"
+                    },
+                    "lastName": {
+                        "kind": "SCALAR",
+                        "name": "String"
+                    }
+                }
+            },
+            "kind": "INPUT_OBJECT"
+        },
+        {
+            "Message": {
+                "params": {
+                    "id": {
+                        "kind": "SCALAR",
+                        "name": "ID",
+                        "nonNull": true
+                    },
+                    "content": {
+                        "kind": "SCALAR",
+                        "name": "String"
+                    },
+                    "author": {
+                        "kind": "OBJECT",
+                        "name": "Author"
+                    }
+                }
+            },
+            "kind": "OBJECT"
+        },
+        {
+            "Author": {
+                "params": {
+                    "id": {
+                        "kind": "SCALAR",
+                        "name": "ID",
+                        "nonNull": true
+                    },
+                    "firstName": {
+                        "kind": "SCALAR",
+                        "name": "String"
+                    },
+                    "lastName": {
+                        "kind": "SCALAR",
+                        "name": "String"
+                    }
+                }
+            },
+            "kind": "OBJECT"
+        }
+    ],
+    "Queries": [
+        {
+            "name": "messages",
+            "produces": {
+                "kind": "LIST",
+                "name": null,
+                "ofType": {
+                    "kind": "OBJECT",
+                    "name": "Message"
+                }
+            },
+            "consumes": []
+        },
+        {
+            "name": "authors",
+            "produces": {
+                "kind": "LIST",
+                "name": null,
+                "ofType": {
+                    "kind": "OBJECT",
+                    "name": "Author"
+                }
+            },
+            "consumes": []
+        },
+        {
+            "name": "getMessage",
+            "produces": {
+                "kind": "OBJECT",
+                "name": "Message"
+            },
+            "consumes": [
+                {
+                    "name": "id",
+                    "type": {
+                        "kind": "SCALAR",
+                        "name": "ID",
+                        "nonNull": true
+                    }
+                }
+            ]
+        },
+        {
+            "name": "getAuthor",
+            "produces": {
+                "kind": "OBJECT",
+                "name": "Author"
+            },
+            "consumes": [
+                {
+                    "name": "id",
+                    "type": {
+                        "kind": "SCALAR",
+                        "name": "ID",
+                        "nonNull": true
+                    }
+                }
+            ]
+        }
+    ],
+    "Mutations": [
+        {
+            "name": "createMessage",
+            "args": [
+                {
+                    "name": "input",
+                    "type": {
+                        "kind": "INPUT_OBJECT",
+                        "name": "MessageInput"
+                    },
+                    "defaultValue": null
+                }
+            ],
+            "return_type": {
+                "kind": "OBJECT",
+                "name": "Message",
+                "ofType": null
+            },
+            "action_type": "CREATE"
+        },
+        {
+            "name": "createAuthor",
+            "args": [
+                {
+                    "name": "input",
+                    "type": {
+                        "kind": "INPUT_OBJECT",
+                        "name": "AuthorInput"
+                    },
+                    "defaultValue": null
+                }
+            ],
+            "return_type": {
+                "kind": "OBJECT",
+                "name": "Author",
+                "ofType": null
+            },
+            "action_type": "CREATE"
+        },
+        {
+            "name": "updateMessage",
+            "args": [
+                {
+                    "name": "id",
+                    "type": {
+                        "kind": "SCALAR",
+                        "name": "ID",
+                        "nonNull": true
+                    },
+                    "defaultValue": null
+                },
+                {
+                    "name": "input",
+                    "type": {
+                        "kind": "INPUT_OBJECT",
+                        "name": "MessageInput"
+                    },
+                    "defaultValue": null
+                }
+            ],
+            "return_type": {
+                "kind": "OBJECT",
+                "name": "Message",
+                "ofType": null
+            },
+            "action_type": "UPDATE"
+        },
+        {
+            "name": "updateAuthor",
+            "args": [
+                {
+                    "name": "id",
+                    "type": {
+                        "kind": "SCALAR",
+                        "name": "ID",
+                        "nonNull": true
+                    },
+                    "defaultValue": null
+                },
+                {
+                    "name": "input",
+                    "type": {
+                        "kind": "INPUT_OBJECT",
+                        "name": "AuthorInput"
+                    },
+                    "defaultValue": null
+                }
+            ],
+            "return_type": {
+                "kind": "OBJECT",
+                "name": "Author",
+                "ofType": null
+            },
+            "action_type": "UPDATE"
+        },
+        {
+            "name": "deleteMessage",
+            "args": [
+                {
+                    "name": "id",
+                    "type": {
+                        "kind": "SCALAR",
+                        "name": "ID",
+                        "nonNull": true
+                    },
+                    "defaultValue": null
+                }
+            ],
+            "return_type": {
+                "kind": "OBJECT",
+                "name": "Message",
+                "ofType": null
+            },
+            "action_type": "DELETE"
+        },
+        {
+            "name": "deleteAuthor",
+            "args": [
+                {
+                    "name": "id",
+                    "type": {
+                        "kind": "SCALAR",
+                        "name": "ID",
+                        "nonNull": true
+                    },
+                    "defaultValue": null
+                }
+            ],
+            "return_type": {
+                "kind": "OBJECT",
+                "name": "Author",
+                "ofType": null
+            },
+            "action_type": "DELETE"
+        }
+    ]
+}
