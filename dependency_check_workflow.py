@@ -2,7 +2,6 @@ from random import random
 import requests, json
 import introspection.connect as connect
 import introspection.parse as parse
-import random
 import re
 
 
@@ -15,6 +14,8 @@ fuzz_id = ["14314", "qrqf2132", "@(Q@QQD"]
 
 data_type_json = parse.parse_data_type(connect.get_introspection(url="http://neogeek.io:4000/graphql"))
 
+
+# JSON examples to build the call
 test_json = {'name': 'getMessage', 'produces': {'kind': 'OBJECT', 'name': 'Message'}, 'consumes': [{'name': 'id', 'type': {'kind': 'SCALAR', 'name': 'ID', 'nonNull': True}}]}
 test_json2 = {'name': 'createMessage', 'args': [{'name': 'input', 'type': {'kind': 'INPUT_OBJECT', 'name': 'MessageInput'}, 'defaultValue': None}], 'return_type': {'kind': 'OBJECT', 'name': 'Message', 'ofType': None}, 'action_type': 'CREATE'}
 

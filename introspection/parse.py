@@ -202,7 +202,7 @@ def generate_grammar_file(path, data_types, queries, mutations):
         "Mutations": mutations
     }
 
-    yaml.dump(grammer, f)
+    json.dump(grammer, f)
     f.close()
 
     
@@ -216,7 +216,7 @@ if __name__ == "__main__":
     query_list = parse_query(introspection_json)
     mutation_list = parse_mutation(introspection_json)
 
-    generate_grammar_file('./grammer.yaml', object_type_list, query_list, mutation_list)
+    generate_grammar_file('./grammer.json', object_type_list, query_list, mutation_list)
     
 
 

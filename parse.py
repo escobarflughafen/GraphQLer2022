@@ -3,7 +3,6 @@ import functools
 import json
 import yaml
 from pprint import pprint
-import introspection_query
 
 def get_type(typedef):
     if typedef["ofType"] == None:
