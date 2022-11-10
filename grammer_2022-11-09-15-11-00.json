@@ -1,98 +1,93 @@
 {
-    "DataTypes": [
-        {
-            "MessageInput": {
-                "params": {
-                    "content": {
-                        "kind": "SCALAR",
-                        "name": "String"
-                    },
-                    "authorId": {
-                        "kind": "SCALAR",
-                        "name": "String"
-                    }
+    "DataTypes": {
+        "MessageInput": {
+            "kind": "INPUT_OBJECT",
+            "params": {
+                "content": {
+                    "kind": "SCALAR",
+                    "name": "String"
+                },
+                "authorId": {
+                    "kind": "SCALAR",
+                    "name": "String"
                 }
-            },
-            "kind": "INPUT_OBJECT"
+            }
         },
-        {
-            "AuthorInput": {
-                "params": {
-                    "firstName": {
-                        "kind": "SCALAR",
-                        "name": "String"
-                    },
-                    "lastName": {
-                        "kind": "SCALAR",
-                        "name": "String"
-                    }
-                }
-            },
-            "kind": "INPUT_OBJECT"
+        "String": {
+            "kind": "SCALAR"
         },
-        {
-            "Message": {
-                "params": {
-                    "id": {
-                        "kind": "SCALAR",
-                        "name": "ID",
-                        "nonNull": true
-                    },
-                    "content": {
-                        "kind": "SCALAR",
-                        "name": "String"
-                    },
-                    "author": {
-                        "kind": "OBJECT",
-                        "name": "Author"
-                    }
+        "AuthorInput": {
+            "kind": "INPUT_OBJECT",
+            "params": {
+                "firstName": {
+                    "kind": "SCALAR",
+                    "name": "String"
+                },
+                "lastName": {
+                    "kind": "SCALAR",
+                    "name": "String"
                 }
-            },
-            "kind": "OBJECT"
+            }
         },
-        {
-            "Author": {
-                "params": {
-                    "id": {
-                        "kind": "SCALAR",
-                        "name": "ID",
-                        "nonNull": true
-                    },
-                    "firstName": {
-                        "kind": "SCALAR",
-                        "name": "String"
-                    },
-                    "lastName": {
-                        "kind": "SCALAR",
-                        "name": "String"
-                    }
+        "Message": {
+            "kind": "OBJECT",
+            "params": {
+                "id": {
+                    "kind": "SCALAR",
+                    "name": "ID",
+                    "nonNull": true
+                },
+                "content": {
+                    "kind": "SCALAR",
+                    "name": "String"
+                },
+                "author": {
+                    "kind": "OBJECT",
+                    "name": "Author"
                 }
-            },
-            "kind": "OBJECT"
+            }
+        },
+        "ID": {
+            "kind": "SCALAR"
+        },
+        "Author": {
+            "kind": "OBJECT",
+            "params": {
+                "id": {
+                    "kind": "SCALAR",
+                    "name": "ID",
+                    "nonNull": true
+                },
+                "firstName": {
+                    "kind": "SCALAR",
+                    "name": "String"
+                },
+                "lastName": {
+                    "kind": "SCALAR",
+                    "name": "String"
+                }
+            }
+        },
+        "Boolean": {
+            "kind": "SCALAR"
         }
-    ],
+    },
     "Queries": [
         {
             "name": "messages",
             "produces": {
-                "kind": "LIST",
-                "name": null,
-                "ofType": {
-                    "kind": "OBJECT",
-                    "name": "Message"
-                }
+                "kind": "OBJECT",
+                "name": "Message",
+                "isList": true
             },
             "consumes": []
         },
         {
             "name": "authors",
             "produces": {
-                "kind": "LIST",
-                "name": null,
-                "ofType": {
-                    "kind": "OBJECT",
-                    "name": "Author"
-                }
+                "kind": "OBJECT",
+                "name": "Author",
+                "isList": true
             },
             "consumes": []
         },

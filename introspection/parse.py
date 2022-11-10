@@ -42,21 +42,26 @@ def parse_data_type(introspection_json):
     query_type_name = introspection_json["data"]["__schema"]["queryType"]["name"]
 
     # Get mutation type name
-    mutation_type_name = introspection_json["data"]["__schema"]["mutationType"]["name"]
+    try:
+        mutation_type_name = introspection_json["data"]["__schema"]["mutationType"]["name"]
+    except Exception:
+        mutation_type_name = ""
+
+
 
     # Get subscription type name
     # subscription_type_name = inspection_json["data"]["__schema"]["subscriptionType"]["name"]
 
     type_data = introspection_json["data"]["__schema"]["types"]
-    
+
     for d in type_data:
-        typename = d["name"]
-        objects[typename] = {}
-        if d["kind"] == "OBJECT":
+        if d["kind"] != "SCALAR" and d["name"] != query_type_name and d["name"] != mutation_type_name and d["name"][:2] != "__":
+            typename = d["name"]
+            objects[typename] = {}
             objects[typename]["kind"] = d["kind"]
-            # Filter out multation & query & subscription & introspection system object.
-            if d["name"] != query_type_name and d["name"] != mutation_type_name and d["name"][:2] != "__":
-                objects[typename]["params"] = {} 
+            if d["kind"] == "OBJECT":
+                # Filter out multation & query & subscription & introspection system object.
+                objects[typename]["params"] = {}
 
                 for f in d["fields"]:
                     param_name = f["name"]
@@ -64,35 +69,23 @@ def parse_data_type(introspection_json):
                     param_type = get_type(f["type"])
 
                     # Add to the parameter list.
-                    object_params["params"][param_name] = param_type
+                    objects[typename]["params"][param_name] = param_type
 
-                object[object_name] = object_params
-                object["kind"] = "OBJECT"
-                object_list.append(object)
+            elif d["kind"] == "INPUT_OBJECT":
+                objects[typename]["params"] = {}
 
-        elif d["kind"] == "INPUT_OBJECT":
-            object = {}
-            object_name = d["name"]
-            object_params = {}
-            object_params["params"] = {}
+                for f in d["inputFields"]:
+                    param_name = f["name"]
+                    param_type = {}
+                    param_type = get_type(f["type"])
 
-            for f in d["inputFields"]:
-                param_name = f["name"]
-                param_type = {}
-                param_type = get_type(f["type"])
+                    # Add to the parameter list.
+                    objects[typename]["params"][param_name] = param_type
 
-                # Add to the parameter list.
-                object_params["params"][param_name] = param_type
+    return objects
 
-            object[object_name] = object_params
-            object["kind"] = "INPUT_OBJECT"
-            object_list.append(object)
 
-    return object_list
-
-            
-
-        
+'''
 def parse_data_type(inspection_json):
 
     object_list = []
@@ -148,6 +141,7 @@ def parse_data_type(inspection_json):
             object_list.append(object)
 
     return object_list
+'''
 
 
 def parse_query(introspection_json):
@@ -218,7 +212,6 @@ def get_action_type(args):
 
         elif arg["type"]["kind"] == "INPUT_OBJECT":
             has_input_field = True
-        
 
     if has_input_field and has_id_field:
         return "UPDATE"
@@ -230,6 +223,7 @@ def get_action_type(args):
         return "DELETE"
 
     return "OTHER"
+
 
 '''
 def get_all_required_ids_in_args(mutation, datatypes):
@@ -243,8 +237,8 @@ def get_all_required_ids_in_args(mutation, datatypes):
             if arg["type"]["kind"] == "SCALAR" and arg["type"]["name"] == "ID" and arg["type"]["nonNull"]:
                 ids.append(arg["name"])
             elif arg[""]
-'''        
-        
+'''
+
 
 def parse_mutation(introspection_json):
     mutation_list = []
@@ -270,13 +264,12 @@ def parse_mutation(introspection_json):
     return mutation_list
 
 
-
 def parse_dependency(datatypes, queries, mutations):
     counter = 1
     input_objects = [
         datatype for datatype in datatypes if datatype["kind"] == "INPUT_OBJECT"
     ]
-    
+
     parsed_mutations = []
 
     while counter > 0:
@@ -292,14 +285,15 @@ def parse_dependency(datatypes, queries, mutations):
 
             elif mutation["action_type"] == 'UPDATE':
             '''
-        
+
         '''
         for i in range(len(mutations)):
             if mutations[i]["action_type"] == "CREATE":
                 for arg in mutations[i]["args"]
         '''
-    
+
     return parsed_mutations
+
 
 def generate_grammar_file(path, data_types, queries, mutations, type="yaml"):
     if os.path.exists(path):
@@ -322,22 +316,26 @@ def generate_grammar_file(path, data_types, queries, mutations, type="yaml"):
 
 
 if __name__ == "__main__":
-    introspection_json = connect.get_introspection(
-        url="http://neogeek.io:4000/graphql")
+    #    introspection_json = connect.get_introspection(
+    #        url="http://neogeek.io:4000/graphql")
+
+    json_f = open("./introspection/examples/yelp.json")
+    introspection_json = json.load(json_f)
+    json_f.close()
 
     object_type_list = parse_data_type(introspection_json)
-    query_list = parse_query(introspection_json)
-    mutation_list = parse_mutation(introspection_json)
+    #query_list = parse_query(introspection_json)
+    #mutation_list = parse_mutation(introspection_json)
 
     generate_grammar_file(
-        './grammer_{}.json'.format(datetime
+        './grammar_{}.json'.format(datetime
                                    .now()
                                    .strftime("%Y-%m-%d-%H-%M-%S")),
-        object_type_list, query_list, mutation_list, type="json")
+        object_type_list, [], [], type="json")
 
     print(json.dumps(object_type_list, indent=2))
-    print(json.dumps(query_list, indent=2))
-    print(json.dumps(mutation_list, indent=2))
+    #print(json.dumps(query_list, indent=2))
+    #print(json.dumps(mutation_list, indent=2))
 
     '''
     yaml.dump(object_type_list, open("./object_type_list.yml", "w"))
