@@ -7,32 +7,32 @@ from datetime import datetime
 
 
 def get_type(typedef):
-    if typedef["ofType"] == None:
+    if "ofType" in typedef:
+        if typedef["ofType"] == None:
+            return {
+                "kind": typedef["kind"],
+                "name": typedef["name"]
+            }
+        else:
+            # flatten one level of non-null wrapper
+            kind = typedef["kind"]
+            if kind == "NON_NULL":
+                _type = get_type(typedef["ofType"])
+                return {
+                    **_type,
+                    "nonNull": True
+                }
+            else:
+                return {
+                    "kind": kind,
+                    "name": typedef["name"],
+                    "ofType": get_type(typedef["ofType"]),
+                }
+    else:
         return {
             "kind": typedef["kind"],
             "name": typedef["name"]
         }
-    else:
-        # flatten one level of non-null wrapper
-        kind = typedef["kind"]
-        if kind == "NON_NULL":
-            _type = get_type(typedef["ofType"])
-            return {
-                **_type,
-                "nonNull": True
-            }
-        elif kind == "LIST":
-            _type = get_type(typedef["ofType"])
-            return {
-                **_type,
-                "isList": True
-            }
-        else:
-            return {
-                "kind": kind,
-                "name": typedef["name"],
-                "ofType": get_type(typedef["ofType"]),
-            }
 
 
 def parse_data_type(introspection_json):
@@ -319,7 +319,7 @@ if __name__ == "__main__":
     #    introspection_json = connect.get_introspection(
     #        url="http://neogeek.io:4000/graphql")
 
-    json_f = open("./introspection/examples/yelp.json")
+    json_f = open("./introspection/examples/shopify_introspection.json")
     introspection_json = json.load(json_f)
     json_f.close()
 
