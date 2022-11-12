@@ -1,4 +1,3 @@
-
 test-server/server.js
 
 .DS_Store
@@ -13,3 +12,7 @@ __pycache__/
 
 # VScode
 .vscode/settings.json
+
+# grammar file
+grammar*.json
+*/grammar*.json
