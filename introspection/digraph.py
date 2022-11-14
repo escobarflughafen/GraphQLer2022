@@ -33,7 +33,6 @@ def get_input_object_graph(object_graph, input_objects):
         input_object = input_objects[input_object_key]    
         G.add_node(input_object_key, **input_object)
         
-
     return G
 
 for e in G.edges:

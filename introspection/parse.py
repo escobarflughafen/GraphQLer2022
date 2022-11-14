@@ -1,11 +1,10 @@
 import json
 import yaml
-from pprint import pprint
 import connect
 import os
 from datetime import datetime
 
-# parse ofType field recursively
+# parse object type recursively
 def of_type(typedef):
     if "ofType" in typedef:
         if typedef["ofType"] == None:
@@ -34,9 +33,19 @@ def of_type(typedef):
             "name": typedef["name"]
         }
 
+# parsing {query arguments || object fields} from intropsection json
+def parse_args(args_raw):
+    args = {}
+    for arg_raw in args_raw:
+        arg_name = arg_raw["name"]
+        args[arg_name] = of_type(arg_raw["type"])
 
-def parse_data_type(introspection_json):
+    return args
+
+
+def build_datatype(introspection_json):
     objects = {}
+    input_objects = {}
 
     # Get query type name
     query_type_name = introspection_json["data"]["__schema"]["queryType"]["name"]
@@ -55,49 +64,38 @@ def parse_data_type(introspection_json):
 
     type_data = introspection_json["data"]["__schema"]["types"]
 
-    def is_object_kind(typekind):
-        filters = ["SCALAR", query_type_name,
-                   mutation_type_name, subscription_type_name]
-        
-        assertion = (typekind not in filters) and typekind[:2] != "__"
-        # print(typekind, assertion)
+    def is_user_defined_object_kind(typekind, typename):
+        object_kinds = ['OBJECT', 'INPUT_OBJECT']
+        object_name_filters = [query_type_name, mutation_type_name, subscription_type_name]
+
+        assertion = (typekind in object_kinds) and (typename[:2] != "__") and (typename not in object_name_filters)
 
         return assertion
 
-
     for d in type_data:
-        if is_object_kind(d["kind"]):
-            typename = d["name"]
-            objects[typename] = {}
-            objects[typename]["kind"] = d["kind"]
-            objects[typename]["raw"] = d
-            if d["kind"] == "OBJECT":
-                # Filter out multation & query & subscription & introspection system object.
-                objects[typename]["fields"] = {}
+        typekind = d["kind"]
+        typename = d["name"]
+        if is_user_defined_object_kind(typekind, typename):
+            object = {
+                "raw": d,
+                "kind": typekind,
+            }
+            
+            if typekind == "OBJECT":
+                objects[typename] = object
+                # Filter out mutation & query & subscription & introspection system object.
+                object["fields"] = parse_args(d["fields"])
 
-                for f in d["fields"]:
-                    param_name = f["name"]
-                    param_type = {}
-                    param_type = of_type(f["type"])
+            elif typekind == "INPUT_OBJECT":
+                input_objects[typename] = object
+                object["fields"] = parse_args(d["inputFields"])
 
-                    # Add to the parameter list.
-                    objects[typename]["fields"][param_name] = param_type
+    return {
+        "objects": objects,
+        "input_objects": input_objects
+    }
 
-            elif d["kind"] == "INPUT_OBJECT":
-                objects[typename]["fields"] = {}
-
-                for f in d["inputFields"]:
-                    param_name = f["name"]
-                    param_type = {}
-                    param_type = of_type(f["type"])
-
-                    # Add to the parameter list.
-                    objects[typename]["fields"][param_name] = param_type
-
-    return objects
-
-
-def parse_query(introspection_json):
+def build_query(introspection_json):
     queries = {}
 
     # Get query type name
@@ -113,80 +111,24 @@ def parse_query(introspection_json):
 
                 queries[query_name]["raw"] = query_raw
                 queries[query_name]["type"] = of_type(query_raw["type"])
-                queries[query_name]["args"] = {}
-                args = queries[query_name]["args"]
-
-                # parsing query arguments
-                for arg_raw in query_raw["args"]:
-                    arg_name = arg_raw["name"]
-                    args[arg_name] = {}
-                    args[arg_name]["type"] = of_type(arg_raw["type"])
+                queries[query_name]["args"] = parse_args(query_raw["args"])
 
     return queries
 
 
-def get_name(raw_introspection):
-    return raw_introspection["name"]
-
-
-def get_args(raw_introspection):
-    args = {}
-    raw_args = raw_introspection["args"]
-    for arg in raw_args:
-        obj = {}
-        # obj["name"] = arg["name"]
-        obj["type"] = of_type(arg["type"])
-        obj["defaultValue"] = arg["defaultValue"]
-
-        args[arg["name"]] = obj
-
-    return args
-
-def get_return_type(raw_introspection):
-    return raw_introspection["type"]
-
 # predicates for determining mutation action type
-
 # refer to https://www.apollographql.com/blog/graphql/basics/designing-graphql-mutations/
 
-def get_action_type(args):
-    has_input_field = False
-    has_id_field = False
-    for arg in args:
-        if args[arg]["type"]["kind"] == "SCALAR" and args[arg]["type"]["name"] == "ID":
-            has_id_field = True
+def build_mutation(introspection_json):
+    def get_name(raw_introspection):
+        return raw_introspection["name"]
 
-        elif args[arg]["type"]["kind"] == "INPUT_OBJECT":
-            has_input_field = True
+    def get_return_type(raw_introspection):
+        return raw_introspection["type"]
 
-    if has_input_field and has_id_field:
-        return "UPDATE"
+    def get_action_type(args):
+        return ""
 
-    if has_input_field and not has_id_field:
-        return "CREATE"
-
-    if not has_input_field and has_id_field:
-        return "DELETE"
-
-    return "OTHER"
-
-
-'''
-def get_all_required_ids_in_args(mutation, datatypes):
-    input_objects = [
-        ""    
-    ]
-    ids = []
-    
-    def traverse(args):
-        for arg in args:
-            if arg["type"]["kind"] == "SCALAR" and arg["type"]["name"] == "ID" and arg["type"]["nonNull"]:
-                ids.append(arg["name"])
-            elif arg[""]
-'''
-
-
-def parse_mutation(introspection_json):
     mutations = {}
     raw_mutation_list = []
 
@@ -199,62 +141,33 @@ def parse_mutation(introspection_json):
     for raw_mutation in raw_mutation_list:
         mutation = {
             # "name": get_name(raw_mutation), # unnecessary - use name as key
-            "args": get_args(raw_mutation),
-            "return_type": get_return_type(raw_mutation)
+            "raw": raw_mutation,
+            "args": parse_args(raw_mutation["args"]),
+            "return_type": get_return_type(raw_mutation),
+            "action_type": ""
         }
 
-        mutation["action_type"] = get_action_type(mutation["args"])
-        mutations[get_name(raw_mutation)]=mutation
+        mutations[get_name(raw_mutation)] = mutation
 
     return mutations
 
 
-def parse_dependency(datatypes, queries, mutations):
-    counter = 1
-    input_objects = [
-        datatype for datatype in datatypes if datatype["kind"] == "INPUT_OBJECT"
-    ]
-
-    parsed_mutations = []
-
-    while counter > 0:
-        for mutation in mutations:
-            pass
-            '''
-            if mutation["action_type"] == 'CREATE':
-                for arg in mutation["args"]:
-                    
-                
-
-            elif mutation["action_type"] == 'DELETE':
-
-            elif mutation["action_type"] == 'UPDATE':
-            '''
-
-        '''
-        for i in range(len(mutations)):
-            if mutations[i]["action_type"] == "CREATE":
-                for arg in mutations[i]["args"]
-        '''
-
-    return parsed_mutations
-
-
-def generate_grammar_file(path, data_types, queries, mutations, type="yaml"):
+def generate_grammar_file(path, objects, input_objects, queries, mutations, type="json"):
     if os.path.exists(path):
         raise Exception("File has already existed.")
 
     f = open(path, 'w')
-
+    
     grammer = {
-        "DataTypes": data_types,
-        "Queries": queries,
-        "Mutations": mutations
+        "objects": objects,
+        "inputObjects": input_objects,
+        "queries": queries,
+        "mutations": mutations
     }
 
     if type == "yaml":
         yaml.dump(grammer, f)
-    else:
+    elif type=="json":
         json.dump(grammer, f)
 
     f.close()
@@ -268,15 +181,17 @@ if __name__ == "__main__":
     #introspection_json = json.load(json_f)
     # json_f.close()
 
-    datatypes = parse_data_type(introspection_json)
-    queries = parse_query(introspection_json)
-    mutations = parse_mutation(introspection_json)
+    datatypes = build_datatype(introspection_json)
+    objects = datatypes["objects"]
+    input_objects = datatypes["input_objects"]
+    queries = build_query(introspection_json)
+    mutations = build_mutation(introspection_json)
 
     generate_grammar_file(
         './grammar_{}.json'.format(datetime
                                    .now()
                                    .strftime("%Y-%m-%d-%H-%M-%S")),
-        datatypes, queries, mutations, type="json")
+        objects, input_objects, queries, mutations, type="json")
 
     #print(json.dumps(datatypes, indent=2))
     #print(json.dumps(queries, indent=2))
