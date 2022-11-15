@@ -2,6 +2,7 @@ import argparse
 import time
 from os import error
 import introspection.parse as parse
+import json
 
 def get_args():
     parser = argparse.ArgumentParser(
@@ -15,11 +16,14 @@ def get_args():
     )
     parser.add_argument(
         '--url', '-u',
-        required=True,
         type=str
     )
     parser.add_argument(
-        '--save', '-s',
+        '--introspection-json', '-i',
+        type=str
+    )
+    parser.add_argument(
+        '--save', '-o',
         type=str
     )
 
@@ -31,9 +35,13 @@ if __name__ == '__main__':
 
     if args.compile:
         url = args.url
-        
-        schema_builder = parse.SchemaBuilder(url)
-        
+        introspection_json_path = args.introspection_json
+        if url:
+            schema_builder = parse.SchemaBuilder(url=url)
+        elif introspection_json_path:
+            with open(introspection_json_path) as f:
+                schema_builder = parse.SchemaBuilder(introspection_json=json.load(f))
+
         if args.save:
             schema_builder.dump(path=args.save)
         
