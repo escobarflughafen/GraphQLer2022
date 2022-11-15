@@ -2,8 +2,8 @@ import networkx as nx
 import json
 
 objects = json.load(open(
-    './grammar_2022-11-09-16-18-57.json'
-))["DataTypes"]
+    './shopify_schema.json'
+))["objects"]
 
 def get_object_graph(objects):
     G = nx.DiGraph()
@@ -17,7 +17,7 @@ def get_object_graph(objects):
             n_1_data = G.nodes[n_1]
             n_2_data = G.nodes[n_2]
             if (n_1 != n_2) and (n_1_data["kind"] == "OBJECT" and n_2_data["kind"] == "OBJECT"):
-                params = n_1_data["params"]
+                params = n_1_data["fields"]
                 for param in params:
                     if params[param]["kind"] == "OBJECT" and params[param]["name"] == n_2:
                         G.add_edge(n_1, n_2)
@@ -35,5 +35,10 @@ def get_input_object_graph(object_graph, input_objects):
         
     return G
 
+print(nx.algorithms.is_directed_acyclic_graph(G))
+print(list(list(nx.topological_sort(G))))
+
+'''
 for e in G.edges:
     print(e)
+'''

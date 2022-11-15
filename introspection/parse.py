@@ -2,7 +2,7 @@ import json
 import yaml
 import os
 from datetime import datetime
-from . import connect
+from request import connect
 
 
 '''
@@ -13,7 +13,7 @@ generate_grammar_file(
     objects, input_objects, queries, mutations, type="json")
 '''
 class SchemaBuilder:
-    def __init__(self, url, introspection_json=None):
+    def __init__(self, url=None, introspection_json=None):
         if introspection_json:
             self.raw_introspection_json = introspection_json
         else:
@@ -26,7 +26,7 @@ class SchemaBuilder:
         mutations = build_mutation(self.raw_introspection_json)
         self.schema = {
             "objects": objects,
-            "input_objects": input_objects,
+            "inputObjects": input_objects,
             "queries": queries,
             "mutations": mutations
         }
@@ -37,7 +37,7 @@ class SchemaBuilder:
         else:
             if fp:
                 json.dump(self.schema, fp)
-            else:
+            elif path:
                 with open(path, "w") as f:
                    json.dump(self.schema, f) 
 
