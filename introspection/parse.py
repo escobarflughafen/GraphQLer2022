@@ -1,8 +1,47 @@
 import json
 import yaml
-import connect
 import os
 from datetime import datetime
+from . import connect
+
+
+'''
+generate_grammar_file(
+    './grammar_{}.json'.format(datetime
+                            .now()
+                            .strftime("%Y-%m-%d-%H-%M-%S")),
+    objects, input_objects, queries, mutations, type="json")
+'''
+class SchemaBuilder:
+    def __init__(self, url, introspection_json=None):
+        if introspection_json:
+            self.raw_introspection_json = introspection_json
+        else:
+            self.raw_introspection_json = connect.fetch_introspection(url=url)
+        
+        datatypes = build_datatype(self.raw_introspection_json)
+        objects = datatypes["objects"]
+        input_objects = datatypes["input_objects"]
+        queries = build_query(self.raw_introspection_json)
+        mutations = build_mutation(self.raw_introspection_json)
+        self.schema = {
+            "objects": objects,
+            "input_objects": input_objects,
+            "queries": queries,
+            "mutations": mutations
+        }
+        
+    def dump(self, fp=None, path=None):
+        if not fp and not path:
+            print(self.schema)
+        else:
+            if fp:
+                json.dump(self.schema, fp)
+            else:
+                with open(path, "w") as f:
+                   json.dump(self.schema, f) 
+
+        
 
 # parse object type recursively
 def of_type(typedef):
@@ -174,6 +213,9 @@ def generate_grammar_file(path, objects, input_objects, queries, mutations, type
 
 
 if __name__ == "__main__":
+    print("parse.py")
+    
+    '''
     introspection_json = connect.fetch_introspection(
         url="http://neogeek.io:4000/graphql")
 
@@ -197,8 +239,4 @@ if __name__ == "__main__":
     #print(json.dumps(queries, indent=2))
     #print(json.dumps(mutations, indent=2))
 
-    '''
-    yaml.dump(object_type_list, open("./object_type_list.yml", "w"))
-    yaml.dump(query_list, open("./query_list.yml", "w"))
-    yaml.dump(mutation_list, open("./mutation_list.yml", "w"))
     '''

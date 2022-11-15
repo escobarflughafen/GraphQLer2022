@@ -4,7 +4,7 @@ import json
 import yaml
 from pprint import pprint
 
-with open("./introspection.gql", "r") as igql:
+with open("./introspection/introspection.gql", "r") as igql:
     introspection_query = igql.read()
 
 
