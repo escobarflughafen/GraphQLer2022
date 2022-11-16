@@ -1,11 +1,4 @@
-from random import random
-import requests, json
-import introspection.connect as connect
-import networkx
-import introspection.parse as parse
-import random
-import re
-
+import json
 
 
 class FunctionBuilder:
@@ -37,26 +30,41 @@ class FunctionBuilder:
         list = {}
         function_objects = self.schema_json[category]
 
+        # we review every functions
         for function_name, function_body in function_objects.items():
             input_args = function_body["args"]
             output = function_body["type"]
+            # to bypass any status like LIST, only get real OBJECT
             output_data_type = self._get_type(output)
 
+            # Since I assume every output is actually an Object, so I actually did not check for any other datatypes.
             if output_data_type["kind"] == "OBJECT":
                 list[function_name] = {}
+                # here I just copy the raw data just in case
                 list[function_name]["rawdata"] = function_body
                 list[function_name]["inputDatatype"] = {}
+
+                # since the output will be a single Object, we just copy its original structure here
                 list[function_name]["outputDatatype"] = output_data_type
+
+                # then we check for any input items and see if it match any of the Objects
                 for arg_name, arg_body in function_body["args"].items():
+                    # again we only focus on the real Object, not the status like LIST or something
                     arg_data_type = self._get_type(arg_body)
+                    # if the scalar type is ID, then we want to find if there's any ID exists
+                    # in the output datatype. If exists, we will assume that the input ID here 
+                    # is related to one of the output datatype (we search recursively for every 
+                    # child objects inside the output object).
                     if arg_data_type["kind"] == "SCALAR" and arg_data_type["name"] == "ID":
-                        # search ID from output datatype
                         list[function_name]["inputDatatype"][arg_name] = self._search_related_object(arg_name, output_data_type["name"])
+                    # if it is other scalar or enum type we will search the scalar-datatype list
+                    # to look for matching names.
                     elif arg_data_type["kind"] == "SCALAR" or arg_data_type["kind"] == "ENUM":
                         list[function_name]["inputDatatype"][arg_name] = self._get_scalar_with_datatype(arg_name)
+                    # Otherwise if it is an input object, we want to know if there's any ID type
+                    # inside the input object. Then we are basically doing similar things by searching
+                    # inside the output datatype and find the mapping.
                     elif arg_data_type["kind"] == "INPUT_OBJECT":
-                        # check for input object and see if there's any ID inside
-                        # list[function_name]["inputDatatype"][arg_name] = arg_data_type
                         list[function_name]["inputDatatype"][arg_name] = self._search_related_object_from_input_object(arg_data_type["name"], arg_name, output_data_type["name"])
 
             elif output_data_type == "SCALAR":
@@ -72,6 +80,9 @@ class FunctionBuilder:
 
         return list
 
+
+    # Function to bypass any status like LIST or something
+    # return the true type of the data
     def _get_type(self, type):
         if type["name"] == None:
             return self._get_type(type["ofType"])
@@ -106,10 +117,15 @@ class FunctionBuilder:
     def _search_related_object_from_input_object(self, input_object_datatype, id_name, output_object_name):
         result = None
         input_objects = self.input_objects
+        # we check for every object inside the input object and see if it is an ID type
         for input_object_name, input_object_body in input_objects[input_object_datatype]["fields"].items():
             input_object_body = self._get_type(input_object_body)
+            # if we found and ID type directlly, we call the function to search from the output object name isntantly
             if input_object_body["kind"] == "SCALAR" and input_object_body["name"] == "ID":
                 return self._search_related_object(input_object_name, output_object_name)
+            # else we have to check the child input objects and do the recursive thing
+            # here we did not instantly return is because the function have to search for 
+            # every objects instead of the first one.
             elif input_object_body["kind"] == "INPUT_OBJECT":
                 result = self._search_related_object_from_input_object(input_object_body["name"], input_object_name, output_object_name)
         return result
