@@ -2,17 +2,9 @@ import json
 import yaml
 import os
 from datetime import datetime
-from request import connect
+from connect import connect
 import sys
 
-
-'''
-generate_grammar_file(
-    './grammar_{}.json'.format(datetime
-                            .now()
-                            .strftime("%Y-%m-%d-%H-%M-%S")),
-    objects, input_objects, queries, mutations, type="json")
-'''
 class SchemaBuilder:
     def __init__(self, url=None, introspection_json=None):
         if introspection_json:
@@ -31,7 +23,8 @@ class SchemaBuilder:
             "objects": objects,
             "inputObjects": input_objects,
             "queries": queries,
-            "mutations": mutations
+            "mutations": mutations,
+            "enums": {}
         }
         
     def dump(self, fp=None, path=None):
@@ -43,7 +36,7 @@ class SchemaBuilder:
             with open(path, "w") as f:
                 json.dump(self.schema, f) 
         else:
-            print(json_literal, f=sys.stdout)
+            print(json_literal, file=sys.stdout)
         
         return json_literal
 
