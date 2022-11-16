@@ -48,29 +48,20 @@ def get_type(type):
 
 
 
-def link_scalar_with_dataType(objects):
+def link_objects_with_data_type(objects):
     list = {}
-    for key, value in objects.items():
-        for kkey, vvalue in value["fields"].items():
-            list[kkey] = {}
-            list[kkey]["kind"] = value["kind"]
-            list[kkey]["name"] = key
-    return list
-
-def link_inputDatatype_with_dataType(objects):
-    list = {}
-    for key, value in objects.items():
-        for kkey, vvalue in value["fields"].items():
-            list[kkey] = {}
-            list[kkey]["kind"] = value["kind"]
-            list[kkey]["name"] = key
+    for object_name, object_body in objects.items():
+        for field_name, field_value in object_body["fields"].items():
+            list[field_name] = {}
+            list[field_name]["kind"] = object_body["kind"]
+            list[field_name]["name"] = object_name
     return list
 
 
 
 def get_scalar_with_datatype(name):
-    test = link_scalar_with_dataType(objects["objects"])
-    test2 = link_inputDatatype_with_dataType(objects["inputObjects"])
+    test = link_objects_with_data_type(objects["objects"])
+    test2 = link_objects_with_data_type(objects["inputObjects"])
     list = {}
     test.update(test2)
     if test.get(name) != None:
@@ -79,36 +70,63 @@ def get_scalar_with_datatype(name):
         return None
 
 
+def search_related_object(objects, id_name, object_name):
+    result = None
+    for arg_name, arg_body in objects[object_name]["fields"].items():
+        if arg_body["kind"] == "SCALAR" and arg_body["name"] == "ID":
+            result = object_name
+            return result
+        elif arg_body["kind"] == "OBJECT":
+            result = search_related_object(objects, id_name, arg_body["name"])
+            if result != None:
+                return result
 
-def link_function_with_datatype(list, functionName, functionObject):
-    output = functionObject["type"]
-    data_type = get_type(output)
-    if data_type["kind"] == "OBJECT":
-        list[functionName] = {}
-        list[functionName]["rawdata"] = functionObject["raw"]
-        list[functionName]["inputDatatype"] = []
-        for argkey, argobject in functionObject["args"].items():
-            list[functionName]["inputDatatype"].append(get_scalar_with_datatype(argkey))
-        list[functionName]["outputDataType"] = output["name"]
+    return result
 
-    elif data_type == "SCALAR":
-        list[functionName] = {}
-        list[functionName]["rawdata"] = functionObject["raw"]
-        list[functionName]["inputDatatype"] = []
-        list[functionName]["outputDataType"] = arg["name"]
 
-    elif data_type == "INTERFACE":
-        pass
-    elif data_type == "UNION":
-        pass
 
-    elif data_type == "ENUM":
-        pass
+def link_functions_with_datatype(objects):
+    list = {}
+    function_objects = objects["mutations"]
 
-    elif data_type == "INPUT_OBJECT":
-        pass
+    for function_name, function_body in function_objects.items():
+        input_args = function_body["args"]
+        output = function_body["type"]
+        output_data_type = get_type(output)
 
-    return
+        if output_data_type["kind"] == "OBJECT":
+            list[function_name] = {}
+            list[function_name]["rawdata"] = function_body
+            list[function_name]["inputDatatype"] = {}
+            list[function_name]["outputDatatype"] = output_data_type
+            for arg_name, arg_body in function_body["args"].items():
+                arg_data_type = get_type(arg_body)
+                if arg_data_type["kind"] == "SCALAR" and arg_data_type["name"] == "ID":
+                    # search for output datatype
+                    list[function_name]["inputDatatype"][arg_name] = search_related_object(objects["objects"], arg_name, output_data_type["name"])
+                elif arg_data_type["kind"] == "SCALAR" or arg_data_type["kind"] == "ENUM":
+                    list[function_name]["inputDatatype"][arg_name] = get_scalar_with_datatype(arg_name)
+                elif arg_data_type["kind"] == "INPUT_OBJECT":
+                    list[function_name]["inputDatatype"][arg_name] = arg_data_type
+
+        elif output_data_type == "SCALAR":
+            list[function_name] = {}
+            list[function_name]["rawdata"] = function_object["raw"]
+            list[function_name]["inputDatatype"] = []
+            list[function_name]["outputDataType"] = arg["name"]
+
+        elif output_data_type == "INTERFACE":
+            pass
+        elif output_data_type == "UNION":
+            pass
+
+        elif output_data_type == "ENUM":
+            pass
+
+        elif output_data_type == "INPUT_OBJECT":
+            pass
+
+    return list
 
 
 def link_function_with_datatype_input(list, object):
@@ -132,8 +150,7 @@ def link_function_with_datatype_input(list, object):
     return
                 
 
-for key, value in objects["mutations"].items():
-    link_function_with_datatype(list, key, value)
+test5 = link_functions_with_datatype(objects)
 for object in objects["Queries"]:
     link_function_with_datatype(list, object)
 print(list)
