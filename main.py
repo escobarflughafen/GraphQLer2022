@@ -2,6 +2,7 @@ import argparse
 import time
 from os import error
 import introspection.parse as parse
+from object_dependency import ObjectSequenceBuilder
 import json
 
 
@@ -65,4 +66,16 @@ if __name__ == '__main__':
         else:
             schema_builder.dump()
         
+    # testest
+    obsb = ObjectSequenceBuilder("./schema.json")
+    object_sequence, unsolved_objects = obsb.build_sequence()
+    print("Final sequence:")
+    for i in object_sequence:
+        print(i)
+
+    print()
+    print("Unsolevd objects:")
+    while not unsolved_objects.empty():
+        print(unsolved_objects.get())
+    # test end
         
