@@ -3,6 +3,7 @@ import yaml
 import os
 from datetime import datetime
 from request import connect
+import sys
 
 
 '''
@@ -16,8 +17,10 @@ class SchemaBuilder:
     def __init__(self, url=None, introspection_json=None):
         if introspection_json:
             self.raw_introspection_json = introspection_json
-        else:
+        elif url:
             self.raw_introspection_json = connect.fetch_introspection(url=url)
+        else:
+            raise Exception("requires introspection source at parameter `url` or `introspection_json`")
         
         datatypes = build_datatype(self.raw_introspection_json)
         objects = datatypes["objects"]
@@ -32,14 +35,17 @@ class SchemaBuilder:
         }
         
     def dump(self, fp=None, path=None):
-        if not fp and not path:
-            print(self.schema)
+        json_literal = json.dumps(self.schema)
+
+        if fp:
+            json.dump(self.schema, fp)
+        elif path:
+            with open(path, "w") as f:
+                json.dump(self.schema, f) 
         else:
-            if fp:
-                json.dump(self.schema, fp)
-            elif path:
-                with open(path, "w") as f:
-                   json.dump(self.schema, f) 
+            print(json_literal, f=sys.stdout)
+        
+        return json_literal
 
         
 
@@ -182,8 +188,7 @@ def build_mutation(introspection_json):
             # "name": get_name(raw_mutation), # unnecessary - use name as key
             "raw": raw_mutation,
             "args": parse_args(raw_mutation["args"]),
-            "return_type": get_return_type(raw_mutation),
-            "action_type": ""
+            "type": get_return_type(raw_mutation),
         }
 
         mutations[get_name(raw_mutation)] = mutation
