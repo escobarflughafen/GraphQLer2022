@@ -4,7 +4,6 @@ from os import error
 import introspection.parse as parse
 import json
 
-
 def get_args():
     parser = argparse.ArgumentParser(
         '''
@@ -34,11 +33,11 @@ def get_args():
         '--introspection-json', '-i',
         type=str
     )
+
     parser.add_argument(
         '--save', '-o',
         type=str
     )
-
 
     return parser
 

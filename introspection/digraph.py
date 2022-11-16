@@ -5,6 +5,13 @@ objects = json.load(open(
     './shopify_schema.json'
 ))["objects"]
 
+def is_dependent(obj1, obj2):
+    pass
+
+def build_object_graph(objects):
+    G = nx.DiGraph()
+    
+
 def get_object_graph(objects):
     G = nx.DiGraph()
 
