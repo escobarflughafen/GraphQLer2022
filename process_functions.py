@@ -7,18 +7,12 @@ import random
 import re
 
 
-def get_type(type):
-    if type["name"] == None:
-        return get_type(type["ofType"])
-    else:
-        return type
-
 
 class FunctionDict:
     
 
     def __init__(self):
-        self.name = name
+        self.name = {}
         self.rawdata = object
         self.inputDataType = {}
         self.outputDataType = {}
@@ -73,22 +67,23 @@ def link_inputDatatype_with_dataType(objects):
     return list
 
 
-test = link_scalar_with_dataType(objects["objects"])
-test2 = link_inputDatatype_with_dataType(objects["inputObjects"])
 
-def get_scalar_with_datatype(name, list1, list2):
+def get_scalar_with_datatype(name):
+    test = link_scalar_with_dataType(objects["objects"])
+    test2 = link_inputDatatype_with_dataType(objects["inputObjects"])
     list = {}
-    list.append(list1)
-    list.append(list2)
-    return list[name]["name"]
+    test.update(test2)
+    if test.get(name) != None:
+        return test[name]["name"]
+    else:
+        return None
 
 
 
 def link_function_with_datatype(list, functionName, functionObject):
     output = functionObject["type"]
     data_type = get_type(output)
-    if data_type == "OBJECT":
-        # out put is an object
+    if data_type["kind"] == "OBJECT":
         list[functionName] = {}
         list[functionName]["rawdata"] = functionObject["raw"]
         list[functionName]["inputDatatype"] = []
@@ -112,19 +107,6 @@ def link_function_with_datatype(list, functionName, functionObject):
 
     elif data_type == "INPUT_OBJECT":
         pass
-
-        if list.get(arg["name"]) != None:
-            list[arg["name"]].append(object)
-        else:
-            list[arg["name"]] = []
-            list[arg["name"]].append(object)
-        scalarOnly = False
-    if scalarOnly:
-        if list.get("scalarOnly") != None:
-            list["scalarOnly"].append(object)
-        else:
-            list["scalarOnly"] = []
-            list["scalarOnly"].append(object)
 
     return
 
