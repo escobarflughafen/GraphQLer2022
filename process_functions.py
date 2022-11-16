@@ -8,148 +8,143 @@ import re
 
 
 
-class FunctionDict:
-    
+class FunctionBuilder:
 
-    def __init__(self):
-        self.name = {}
-        self.rawdata = object
-        self.inputDataType = {}
-        self.outputDataType = {}
-    
-    def setInputDataType(self):
-        return
+    def __init__(self, schema_json):
+        self.schema_json = schema_json
+        self.objects = schema_json["objects"]
+        self.input_objects = schema_json["inputObjects"]
+        if schema_json.get("queries") != None:
+            self.queries = schema_json["queries"]
+            self.query_datatype_mappings = self.link_functions_with_datatype("queries")
+        if schema_json.get("mutations") != None:
+            self.mutations = schema_json["mutations"]
+            self.mutation_datatype_mappings = self.link_functions_with_datatype("mutations")
 
-    def getInputDataType(self):
-        return
+    def get_query_mappings(self):
+        return self.query_datatype_mappings
 
-    def setOutPutDataType(self):
-        return
+    def get_mutation_mappings(self):
+        return self.mutation_datatype_mappings
 
-    def getOutPutDataType(self):
-        return
+    def get_query_mapping(self, query_name):
+        return self.query_datatype_mappings[query_name]
 
-    def getRawdata(self):
-        return self.rawdata
+    def get_mutation_mapping(self, mutation_name):
+        return self.mutation_datatype_mappings[mutation_name]
 
+    def link_functions_with_datatype(self, category):
+        list = {}
+        function_objects = self.schema_json[category]
 
+        for function_name, function_body in function_objects.items():
+            input_args = function_body["args"]
+            output = function_body["type"]
+            output_data_type = self._get_type(output)
 
-list = {}
-f = open("schema2.json", "r")
-objects = json.load(f)
+            if output_data_type["kind"] == "OBJECT":
+                list[function_name] = {}
+                list[function_name]["rawdata"] = function_body
+                list[function_name]["inputDatatype"] = {}
+                list[function_name]["outputDatatype"] = output_data_type
+                for arg_name, arg_body in function_body["args"].items():
+                    arg_data_type = self._get_type(arg_body)
+                    if arg_data_type["kind"] == "SCALAR" and arg_data_type["name"] == "ID":
+                        # search ID from output datatype
+                        list[function_name]["inputDatatype"][arg_name] = self._search_related_object(arg_name, output_data_type["name"])
+                    elif arg_data_type["kind"] == "SCALAR" or arg_data_type["kind"] == "ENUM":
+                        list[function_name]["inputDatatype"][arg_name] = self._get_scalar_with_datatype(arg_name)
+                    elif arg_data_type["kind"] == "INPUT_OBJECT":
+                        # check for input object and see if there's any ID inside
+                        # list[function_name]["inputDatatype"][arg_name] = arg_data_type
+                        list[function_name]["inputDatatype"][arg_name] = self._search_related_object_from_input_object(arg_data_type["name"], arg_name, output_data_type["name"])
 
+            elif output_data_type == "SCALAR":
+                pass
+            elif output_data_type == "INTERFACE":
+                pass
+            elif output_data_type == "UNION":
+                pass
+            elif output_data_type == "ENUM":
+                pass
+            elif output_data_type == "INPUT_OBJECT":
+                pass
 
-def get_type(type):
-    if type["name"] == None:
-        return get_type(type["ofType"])
-    else:
-        return type
+        return list
 
+    def _get_type(self, type):
+        if type["name"] == None:
+            return self._get_type(type["ofType"])
+        else:
+            return type
 
+    def _search_related_object(self, id_name, object_name):
+        result = None
+        output_objects = self.objects
+        # in the first loop we check for scalar type only
+        # we should have check all scalar type before checking any objects to prevent
+        # the program bypass any IDs existing in current datatype
+        for arg_name, arg_body in output_objects[object_name]["fields"].items():
+            arg_body = self._get_type(arg_body)
+            if arg_body["kind"] == "SCALAR" and arg_body["name"] == "ID":
+                result = object_name
+                return result
+        
+        # then if there are no ID type scalar exists we then go through objects
+        # inside to do further check
+        for arg_name, arg_body in output_objects[object_name]["fields"].items():
+            arg_body = self._get_type(arg_body)
+            if arg_body["kind"] == "OBJECT":
+                result = self._search_related_object(id_name, arg_body["name"])
+                if result != None:
+                    return result
 
-
-def link_objects_with_data_type(objects):
-    list = {}
-    for object_name, object_body in objects.items():
-        for field_name, field_value in object_body["fields"].items():
-            list[field_name] = {}
-            list[field_name]["kind"] = object_body["kind"]
-            list[field_name]["name"] = object_name
-    return list
-
-def get_scalar_with_datatype(name):
-    test = link_objects_with_data_type(objects["objects"])
-    test2 = link_objects_with_data_type(objects["inputObjects"])
-    list = {}
-    test.update(test2)
-    if test.get(name) != None:
-        return test[name]["name"]
-    else:
+        # then if we find nothing we return None
         return None
 
 
-def search_related_object(objects, id_name, object_name):
-    result = None
-    for arg_name, arg_body in objects[object_name]["fields"].items():
-        if arg_body["kind"] == "SCALAR" and arg_body["name"] == "ID":
-            result = object_name
-            return result
-        elif arg_body["kind"] == "OBJECT":
-            result = search_related_object(objects, id_name, arg_body["name"])
-            if result != None:
-                return result
-
-    return result
+    def _search_related_object_from_input_object(self, input_object_datatype, id_name, output_object_name):
+        result = None
+        input_objects = self.input_objects
+        for input_object_name, input_object_body in input_objects[input_object_datatype]["fields"].items():
+            input_object_body = self._get_type(input_object_body)
+            if input_object_body["kind"] == "SCALAR" and input_object_body["name"] == "ID":
+                return self._search_related_object(input_object_name, output_object_name)
+            elif input_object_body["kind"] == "INPUT_OBJECT":
+                result = self._search_related_object_from_input_object(input_object_body["name"], input_object_name, output_object_name)
+        return result
 
 
+    def _link_objects_with_data_type(self):
+        list = {}
+        for object_name, object_body in self.objects.items():
+            for field_name, field_value in object_body["fields"].items():
+                field_value = self._get_type(field_value)
+                list[field_name] = {}
+                list[field_name]["kind"] = field_value["kind"]
+                list[field_name]["name"] = object_name
+        return list
 
-def link_functions_with_datatype(objects):
-    list = {}
-    function_objects = objects["mutations"]
-
-    for function_name, function_body in function_objects.items():
-        input_args = function_body["args"]
-        output = function_body["type"]
-        output_data_type = get_type(output)
-
-        if output_data_type["kind"] == "OBJECT":
-            list[function_name] = {}
-            list[function_name]["rawdata"] = function_body
-            list[function_name]["inputDatatype"] = {}
-            list[function_name]["outputDatatype"] = output_data_type
-            for arg_name, arg_body in function_body["args"].items():
-                arg_data_type = get_type(arg_body)
-                if arg_data_type["kind"] == "SCALAR" and arg_data_type["name"] == "ID":
-                    # search for output datatype
-                    list[function_name]["inputDatatype"][arg_name] = search_related_object(objects["objects"], arg_name, output_data_type["name"])
-                elif arg_data_type["kind"] == "SCALAR" or arg_data_type["kind"] == "ENUM":
-                    list[function_name]["inputDatatype"][arg_name] = get_scalar_with_datatype(arg_name)
-                elif arg_data_type["kind"] == "INPUT_OBJECT":
-                    list[function_name]["inputDatatype"][arg_name] = arg_data_type
-
-        elif output_data_type == "SCALAR":
-            list[function_name] = {}
-            list[function_name]["rawdata"] = function_object["raw"]
-            list[function_name]["inputDatatype"] = []
-            list[function_name]["outputDataType"] = arg["name"]
-
-        elif output_data_type == "INTERFACE":
-            pass
-        elif output_data_type == "UNION":
-            pass
-
-        elif output_data_type == "ENUM":
-            pass
-
-        elif output_data_type == "INPUT_OBJECT":
-            pass
-
-    return list
-
-
-def link_function_with_datatype_input(list, object):
-    scalarOnly = True
-    for arg in object["args"]:
-        data_type = get_type(arg["type"])
-        if data_type == "OBJECT":
-            if list.get(arg["name"]) != None:
-                list[arg["name"]].append(object)
-            else:
-                list[arg["name"]] = []
-                list[arg["name"]].append(object)
-            scalarOnly = False
-    if scalarOnly:
-        if list.get("scalarOnly") != None:
-            list["scalarOnly"].append(object)
+    def _get_scalar_with_datatype(self, name):
+        objects_scalar = self._link_objects_with_data_type()
+        input_objects_scalar = self._link_objects_with_data_type()
+        list = {}
+        objects_scalar.update(input_objects_scalar)
+        if objects_scalar.get(name) != None:
+            return objects_scalar[name]["name"]
         else:
-            list["scalarOnly"] = []
-            list["scalarOnly"].append(object)
+            return None
 
-    return
-                
 
-test5 = link_functions_with_datatype(objects)
-for object in objects["Queries"]:
-    link_function_with_datatype(list, object)
-print(list)
+
+
+f = open("schema.json", "r")
+objects = json.load(f)
+
+test = FunctionBuilder(objects)
+test1 = test.get_query_mappings()
+test2 = test.get_mutation_mappings()
+test4 = test.get_query_mapping("customer")
+test5 = test.get_mutation_mapping("checkoutCompleteFree")
+test3 = ""
 
