@@ -35,7 +35,7 @@ class FunctionDict:
 
 
 list = {}
-f = open("schema.json", "r")
+f = open("schema2.json", "r")
 objects = json.load(f)
 
 
@@ -56,8 +56,6 @@ def link_objects_with_data_type(objects):
             list[field_name]["kind"] = object_body["kind"]
             list[field_name]["name"] = object_name
     return list
-
-
 
 def get_scalar_with_datatype(name):
     test = link_objects_with_data_type(objects["objects"])
