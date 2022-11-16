@@ -14,15 +14,105 @@ def get_type(type):
         return type
 
 
+class FunctionDict:
+    
+
+    def __init__(self):
+        self.name = name
+        self.rawdata = object
+        self.inputDataType = {}
+        self.outputDataType = {}
+    
+    def setInputDataType(self):
+        return
+
+    def getInputDataType(self):
+        return
+
+    def setOutPutDataType(self):
+        return
+
+    def getOutPutDataType(self):
+        return
+
+    def getRawdata(self):
+        return self.rawdata
+
+
+
 list = {}
-f = open("grammer.json", "r")
+f = open("schema.json", "r")
 objects = json.load(f)
 
-def link_function_with_datatype(list, object):
-    scalarOnly = True
-    arg = object["return_type"]
-    data_type = arg["kind"]
+
+def get_type(type):
+    if type["name"] == None:
+        return get_type(type["ofType"])
+    else:
+        return type
+
+
+
+
+def link_scalar_with_dataType(objects):
+    list = {}
+    for key, value in objects.items():
+        for kkey, vvalue in value["fields"].items():
+            list[kkey] = {}
+            list[kkey]["kind"] = value["kind"]
+            list[kkey]["name"] = key
+    return list
+
+def link_inputDatatype_with_dataType(objects):
+    list = {}
+    for key, value in objects.items():
+        for kkey, vvalue in value["fields"].items():
+            list[kkey] = {}
+            list[kkey]["kind"] = value["kind"]
+            list[kkey]["name"] = key
+    return list
+
+
+test = link_scalar_with_dataType(objects["objects"])
+test2 = link_inputDatatype_with_dataType(objects["inputObjects"])
+
+def get_scalar_with_datatype(name, list1, list2):
+    list = {}
+    list.append(list1)
+    list.append(list2)
+    return list[name]["name"]
+
+
+
+def link_function_with_datatype(list, functionName, functionObject):
+    output = functionObject["type"]
+    data_type = get_type(output)
     if data_type == "OBJECT":
+        # out put is an object
+        list[functionName] = {}
+        list[functionName]["rawdata"] = functionObject["raw"]
+        list[functionName]["inputDatatype"] = []
+        for argkey, argobject in functionObject["args"].items():
+            list[functionName]["inputDatatype"].append(get_scalar_with_datatype(argkey))
+        list[functionName]["outputDataType"] = output["name"]
+
+    elif data_type == "SCALAR":
+        list[functionName] = {}
+        list[functionName]["rawdata"] = functionObject["raw"]
+        list[functionName]["inputDatatype"] = []
+        list[functionName]["outputDataType"] = arg["name"]
+
+    elif data_type == "INTERFACE":
+        pass
+    elif data_type == "UNION":
+        pass
+
+    elif data_type == "ENUM":
+        pass
+
+    elif data_type == "INPUT_OBJECT":
+        pass
+
         if list.get(arg["name"]) != None:
             list[arg["name"]].append(object)
         else:
@@ -59,8 +149,9 @@ def link_function_with_datatype_input(list, object):
 
     return
                 
-for object in objects["Mutations"]:
-    link_function_with_datatype(list, object)
+
+for key, value in objects["mutations"].items():
+    link_function_with_datatype(list, key, value)
 for object in objects["Queries"]:
     link_function_with_datatype(list, object)
 print(list)
