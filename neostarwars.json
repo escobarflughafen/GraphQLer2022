@@ -240,6 +240,9 @@
                         "name": "Starship"
                     }
                 }
+            },
+            "interfaces": {
+                "Character": null
             }
         },
         "Droid": {
@@ -415,6 +418,9 @@
                     "kind": "SCALAR",
                     "name": "String"
                 }
+            },
+            "interfaces": {
+                "Character": null
             }
         },
         "FriendsConnection": {
@@ -516,7 +522,8 @@
                     "name": "PageInfo",
                     "nonNull": true
                 }
-            }
+            },
+            "interfaces": null
         },
         "FriendsEdge": {
             "raw": {
@@ -569,7 +576,8 @@
                     "kind": "INTERFACE",
                     "name": "Character"
                 }
-            }
+            },
+            "interfaces": null
         },
         "PageInfo": {
             "raw": {
@@ -638,7 +646,8 @@
                     "name": "Boolean",
                     "nonNull": true
                 }
-            }
+            },
+            "interfaces": null
         },
         "Review": {
             "raw": {
@@ -707,7 +716,8 @@
                     "kind": "SCALAR",
                     "name": "String"
                 }
-            }
+            },
+            "interfaces": null
         },
         "Starship": {
             "raw": {
@@ -834,7 +844,8 @@
                         "nonNull": true
                     }
                 }
-            }
+            },
+            "interfaces": null
         }
     },
     "inputObjects": {
@@ -1381,5 +1392,6 @@
             }
         }
     },
-    "enums": {}
+    "enums": null,
+    "interfaces": null
 }
