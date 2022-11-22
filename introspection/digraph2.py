@@ -1,6 +1,6 @@
 import networkx as nx
 import matplotlib.pyplot as plt
-from introspection import parse
+from ..introspection import parse
 import json
 
 
@@ -18,12 +18,6 @@ def get_object_graph(objects):
     for object in objects:
         if objects[object]["kind"] == "OBJECT":
             G.add_node(object, **objects[object])
-    
-    def is_dependent_on(param, objname):
-        if param["kind"] == "LIST":
-            return is_dependent_on(param["ofType"], objname)
-
-        return param["kind"] == "OBJECT" and param["name"] == objname
 
     for n_1 in G:
         for n_2 in G:
@@ -32,7 +26,7 @@ def get_object_graph(objects):
             if (n_1 != n_2) and (n_1_data["kind"] == "OBJECT" and n_2_data["kind"] == "OBJECT"):
                 params = n_1_data["fields"]
                 for param in params:
-                    if is_dependent_on(params[param], n_2):
+                    if params[param]["kind"] == "OBJECT" and params[param]["name"] == n_2:
                         G.add_edge(n_1, n_2)
     
     return G
@@ -49,8 +43,6 @@ def get_input_object_graph(object_graph, input_objects):
 
 
 
-
-#if __name__ == '__main__':
 def test():
     '''
     objects = json.load(open(
@@ -58,9 +50,9 @@ def test():
     ))["objects"]
     '''
     
-    schema = parse.SchemaBuilder(url="http://neogeek.io:4001/graphql")
+    schema = parse.SchemaBuilder(url="http://neogeek.io:4000/graphql")
+    
 
     G = get_object_graph(schema.schema["objects"])
-    sequence = list(reversed(list(nx.topological_sort(G))))
+    sequence = list(nx.topological_sort(G))
     print(sequence)
-    

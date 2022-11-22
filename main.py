@@ -5,7 +5,6 @@ import introspection.parse as parse
 from object_dependency import ObjectSequenceBuilder
 import json
 
-
 def get_args():
     parser = argparse.ArgumentParser(
         '''
@@ -35,11 +34,11 @@ def get_args():
         '--introspection-json', '-i',
         type=str
     )
+
     parser.add_argument(
         '--save', '-o',
         type=str
     )
-
 
     return parser
 
@@ -60,6 +59,8 @@ if __name__ == '__main__':
                 schema_builder = parse.SchemaBuilder(introspection_json=json.load(f))
         else:
             raise Exception("please add corrent introspection source to arguments by --url or --introspection-json")
+
+        print(schema_builder.prepared_schema)
 
         if args.save:
             schema_builder.dump(path=args.save)
