@@ -29,6 +29,7 @@ class SchemaBuilder:
             "mutations": build_mutation(self.raw_introspection_json),
             "enums": build_enumeration(self.raw_introspection_json),
             "interfaces": build_interface(self.raw_introspection_json),
+            "unions": build_union(self.raw_introspection_json),
         }
         self.instantiate()
 
@@ -53,6 +54,7 @@ class SchemaBuilder:
                 k: interface.Interface(k, schema_json=self.schema["interfaces"][k]) for k in self.schema["interfaces"]
             },
         }
+
 
     def dump(self, fp=None, path=None):
         json_literal = json.dumps(self.schema)
@@ -112,6 +114,28 @@ def parse_args(args_raw, type_key="type"):
 
     return args
 
+def build_union(introspection_json):
+    unions = {}
+
+    def is_user_defined_union(raw_json):
+        return raw_json["kind"] == 'UNION' and raw_json["name"][:2] != '__'
+    
+    type_data = introspection_json["data"]["__schema"]["types"]
+
+    for d in type_data:
+        if is_user_defined_union(d):
+            union_name = d["name"]
+            union = {
+                "raw": d,
+                "possibleTypes": {
+                    t["name"]: t["kind"] for t in d["possibleTypes"]
+                }
+            }
+
+            unions[union_name] = union
+
+    return unions
+    
 
 def build_enumeration(introspection_json):
     enumerations = {}

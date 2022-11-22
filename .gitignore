@@ -13,6 +13,11 @@ __pycache__/
 # VScode
 .vscode/settings.json
 
-# grammar file
+# grammar files
 grammar*.json
 */grammar*.json
+
+#temporary files
+temp
+*/temp
+

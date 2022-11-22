@@ -3,6 +3,7 @@ import time
 from os import error
 import introspection.parse as parse
 import json
+from request import request
 
 def get_args():
     parser = argparse.ArgumentParser(
@@ -15,7 +16,7 @@ def get_args():
         '--mode','-mode',
         required=True,
         type=str,
-        choices=["compile", "fuzz"],
+        choices=["compile", "fuzz", "debug"],
         default="compile"
     )
 
@@ -66,4 +67,32 @@ if __name__ == '__main__':
         else:
             schema_builder.dump()
         
+        
+    if args.mode == 'debug':
+        url = args.url
+        introspection_json_path = args.introspection_json
+        if url:
+            schema_builder = parse.SchemaBuilder(url=url)
+        elif introspection_json_path:
+            with open(introspection_json_path) as f:
+                schema_builder = parse.SchemaBuilder(introspection_json=json.load(f))
+        else:
+            raise Exception("please add corrent introspection source to arguments by --url or --introspection-json")
+
+        #print(schema_builder.schema)
+        #print(schema_builder.prepared_schema)
+
+        selected_query = schema_builder.prepared_schema["queries"]["messages"]
+        selected_query.prepare_payload(schema_builder.schema["inputObjects"], schema_builder.schema["objects"])
+        print(selected_query.prepared_payload)
+        
+        #request = requestor.Request(url, requestor.Request.MODE_QUERY)
+        #request.add_payload(selected_query.generate_payload({"id": True}))
+        
+        #print(request.request())
+
+
+        
+        
+
         
