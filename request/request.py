@@ -23,6 +23,7 @@ class Request:
         body += '\n}'
         
         return body
+    
 
     def request(self):
         request_body = self.get_request_body()    

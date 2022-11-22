@@ -4,6 +4,9 @@ from os import error
 import introspection.parse as parse
 import json
 from request import request
+from pprint import pprint
+from fuzzing import orchestrator
+import logging
 
 def get_args():
     parser = argparse.ArgumentParser(
@@ -84,15 +87,13 @@ if __name__ == '__main__':
 
         selected_query = schema_builder.prepared_schema["queries"]["messages"]
         selected_query.prepare_payload(schema_builder.schema["inputObjects"], schema_builder.schema["objects"])
-        print(selected_query.prepared_payload)
+        print(selected_query.stringify_payload(selected_query.prepared_payload))
         
-        #request = requestor.Request(url, requestor.Request.MODE_QUERY)
-        #request.add_payload(selected_query.generate_payload({"id": True}))
-        
-        #print(request.request())
+        pprint(selected_query.prepared_payload)
 
-
-        
+        request = request.Request(url, request.Request.MODE_QUERY)
+        request.add_payload(selected_query.stringify_payload(selected_query.prepared_payload))
         
 
-        
+        print(request.get_request_body())
+        print(request.request())

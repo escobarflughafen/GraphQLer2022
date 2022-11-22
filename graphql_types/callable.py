@@ -38,7 +38,7 @@ class Callable(datatype.Datatype):
                 elif args[arg]["kind"] == "LIST":
                     prepared_args[arg] = []
                 else:
-                    prepared_args[arg] = None
+                    prepared_args[arg] = ''
             
             return prepared_args
         
@@ -55,6 +55,7 @@ class Callable(datatype.Datatype):
             '''
             prepared_return_fields = {}
 
+            # TODO: expand object body || extract ID from inner objects
             if return_type["kind"] == "OBJECT":
                 obj = all_objects[return_type["name"]]
                 fields = obj["fields"]
@@ -76,20 +77,53 @@ class Callable(datatype.Datatype):
             "fields": prepare_return_fields(self.schema["type"], all_objects)
         }
     
-    def stringify_payload(self):
+    def stringify_payload(self, prepared_payload):
         '''
         return payload as string for request.request.sequence
         '''
 
         payload_str = ""
         payload_str += self.name
-        
-        
 
 
+        arg_str = '('
+        def dump_args(args):
+            if args: 
+                for arg in args:
+                    arg_str += arg + ': '
+                    if isinstance(args[arg], dict):
+                        arg_str += '{'
+                        dump_args(args[arg])
+                        arg_str += '},'
+                    else:
+                        if isinstance(args[arg], str):
+                            arg_str += '"'
+                            arg_str += args[arg]
+                            arg_str += '"'
+                        else:
+                            arg_str += str(args[arg])
+                
+        if prepared_payload["args"]:
+            dump_args(prepared_payload["args"]) 
+            arg_str += ')'
+            payload_str += arg_str
         
-        
-
-
-        
+        def dump_field_str(fields):
+            field_str = "{"
+            if fields:
+                for field in fields:
+                    field_str += str(field)+'\n'
+            field_str += "}"
+            return field_str
             
+            
+
+        payload_str += dump_field_str(prepared_payload["fields"])
+
+        return payload_str
+                    
+                    
+
+
+
+        
