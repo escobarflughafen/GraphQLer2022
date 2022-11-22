@@ -59,6 +59,8 @@ if __name__ == '__main__':
         else:
             raise Exception("please add corrent introspection source to arguments by --url or --introspection-json")
 
+        print(schema_builder.prepared_schema)
+
         if args.save:
             schema_builder.dump(path=args.save)
         else:

@@ -1,5 +1,4 @@
 import requests
-import functools
 import json
 import yaml
 from pprint import pprint

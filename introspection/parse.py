@@ -1,18 +1,16 @@
+from graphql_types import mutation
+from graphql_types import query
+from graphql_types import interface
+from graphql_types import enumeration
+from graphql_types import input_object
+from graphql_types import obj
 import json
 import yaml
 import os
-from datetime import datetime
-from request import connect
+from connect import connect
 import sys
+sys.path.append(os.path.join(os.getcwd(), "graphql_types"))
 
-
-'''
-generate_grammar_file(
-    './grammar_{}.json'.format(datetime
-                            .now()
-                            .strftime("%Y-%m-%d-%H-%M-%S")),
-    objects, input_objects, queries, mutations, type="json")
-'''
 class SchemaBuilder:
     def __init__(self, url=None, introspection_json=None):
         if introspection_json:
@@ -20,20 +18,42 @@ class SchemaBuilder:
         elif url:
             self.raw_introspection_json = connect.fetch_introspection(url=url)
         else:
-            raise Exception("requires introspection source at parameter `url` or `introspection_json`")
-        
+            raise Exception(
+                "requires introspection source at parameter `url` or `introspection_json`")
+
         datatypes = build_datatype(self.raw_introspection_json)
-        objects = datatypes["objects"]
-        input_objects = datatypes["input_objects"]
-        queries = build_query(self.raw_introspection_json)
-        mutations = build_mutation(self.raw_introspection_json)
         self.schema = {
-            "objects": objects,
-            "inputObjects": input_objects,
-            "queries": queries,
-            "mutations": mutations
+            "objects": datatypes["objects"],
+            "inputObjects": datatypes["input_objects"],
+            "queries": build_query(self.raw_introspection_json),
+            "mutations": build_mutation(self.raw_introspection_json),
+            "enums": build_enumeration(self.raw_introspection_json),
+            "interfaces": build_interface(self.raw_introspection_json),
         }
-        
+        self.instantiate()
+
+    def instantiate(self):
+        self.prepared_schema = {
+            "objects": {
+                k: obj.Object(k, schema_json=self.schema["objects"][k]) for k in self.schema["objects"]
+            },
+            "inputObjects": {
+                k: input_object.InputObject(k, schema_json=self.schema["inputObjects"][k]) for k in self.schema["inputObjects"]
+            },
+            "queries": {
+                k: query.Query(k, schema_json=self.schema["queries"][k]) for k in self.schema["queries"]
+            },
+            "mutations": {
+                k: mutation.Mutation(k, schema_json=self.schema["mutations"][k]) for k in self.schema["mutations"]
+            },
+            "enums": {
+                k: enumeration.Enum(k, schema_json=self.schema["enums"][k]) for k in self.schema["enums"]
+            },
+            "interfaces": {
+                k: interface.Interface(k, schema_json=self.schema["interfaces"][k]) for k in self.schema["interfaces"]
+            },
+        }
+
     def dump(self, fp=None, path=None):
         json_literal = json.dumps(self.schema)
 
@@ -41,16 +61,17 @@ class SchemaBuilder:
             json.dump(self.schema, fp)
         elif path:
             with open(path, "w") as f:
-                json.dump(self.schema, f) 
+                json.dump(self.schema, f)
         else:
-            print(json_literal, f=sys.stdout)
-        
+            print(json_literal, file=sys.stdout)
+
         return json_literal
 
-        
 
 # parse object type recursively
 def of_type(typedef):
+    if not typedef:
+        return None
     if "ofType" in typedef:
         if typedef["ofType"] == None:
             return {
@@ -79,13 +100,62 @@ def of_type(typedef):
         }
 
 # parsing {query arguments || object fields} from intropsection json
-def parse_args(args_raw):
-    args = {}
-    for arg_raw in args_raw:
-        arg_name = arg_raw["name"]
-        args[arg_name] = of_type(arg_raw["type"])
+
+
+def parse_args(args_raw, type_key="type"):
+    args = None
+    if args_raw:
+        args = {}
+        for arg_raw in args_raw:
+            arg_name = arg_raw["name"]
+            args[arg_name] = of_type(arg_raw[type_key])
 
     return args
+
+
+def build_enumeration(introspection_json):
+    enumerations = {}
+
+    def is_user_defined_enum(raw_json):
+        return raw_json["kind"] == "ENUM" and raw_json["name"][:2] != '__'
+
+    type_data = introspection_json["data"]["__schema"]["types"]
+
+    for d in type_data:
+        if is_user_defined_enum(d):
+            enum_name = d["name"]
+            enum = {
+                "raw": d,
+                "values": d["enumValues"]
+            }
+            enumerations[enum_name] = enum
+
+    return enumerations
+
+
+def build_interface(introspection_json):
+    interfaces = {}
+
+    def is_user_defined_interface(raw_json):
+        return raw_json["kind"] == "INTERFACE" and raw_json["name"][:2] != '__'
+
+    type_data = introspection_json["data"]["__schema"]["types"]
+
+    for d in type_data:
+        if is_user_defined_interface(d):
+            interface_name = d["name"]
+
+            interface = {
+                "raw": d,
+                "kind": "INTERFACE",
+                "fields": parse_args(d["fields"]),
+                "interfaces": parse_args(d["interfaces"], type_key="ofType"),
+                "possibleTypes": parse_args(d["possibleTypes"], type_key="ofType")
+            }
+
+            interfaces[interface_name] = interface
+
+    return interfaces
 
 
 def build_datatype(introspection_json):
@@ -111,9 +181,11 @@ def build_datatype(introspection_json):
 
     def is_user_defined_object_kind(typekind, typename):
         object_kinds = ['OBJECT', 'INPUT_OBJECT']
-        object_name_filters = [query_type_name, mutation_type_name, subscription_type_name]
+        object_name_filters = [query_type_name,
+                               mutation_type_name, subscription_type_name]
 
-        assertion = (typekind in object_kinds) and (typename[:2] != "__") and (typename not in object_name_filters)
+        assertion = (typekind in object_kinds) and (
+            typename[:2] != "__") and (typename not in object_name_filters)
 
         return assertion
 
@@ -125,11 +197,15 @@ def build_datatype(introspection_json):
                 "raw": d,
                 "kind": typekind,
             }
-            
+
             if typekind == "OBJECT":
                 objects[typename] = object
                 # Filter out mutation & query & subscription & introspection system object.
                 object["fields"] = parse_args(d["fields"])
+                # TODO: 11-16'22
+                # if the object is implementing a interface
+                object["interfaces"] = parse_args(
+                    d["interfaces"], type_key="ofType")
 
             elif typekind == "INPUT_OBJECT":
                 input_objects[typename] = object
@@ -139,6 +215,7 @@ def build_datatype(introspection_json):
         "objects": objects,
         "input_objects": input_objects
     }
+
 
 def build_query(introspection_json):
     queries = {}
@@ -201,7 +278,7 @@ def generate_grammar_file(path, objects, input_objects, queries, mutations, type
         raise Exception("File has already existed.")
 
     f = open(path, 'w')
-    
+
     grammer = {
         "objects": objects,
         "inputObjects": input_objects,
@@ -211,7 +288,7 @@ def generate_grammar_file(path, objects, input_objects, queries, mutations, type
 
     if type == "yaml":
         yaml.dump(grammer, f)
-    elif type=="json":
+    elif type == "json":
         json.dump(grammer, f)
 
     f.close()
@@ -219,29 +296,3 @@ def generate_grammar_file(path, objects, input_objects, queries, mutations, type
 
 if __name__ == "__main__":
     print("parse.py")
-    
-    '''
-    introspection_json = connect.fetch_introspection(
-        url="http://neogeek.io:4000/graphql")
-
-    #json_f = open("./introspection/examples/shopify_introspection.json")
-    #introspection_json = json.load(json_f)
-    # json_f.close()
-
-    datatypes = build_datatype(introspection_json)
-    objects = datatypes["objects"]
-    input_objects = datatypes["input_objects"]
-    queries = build_query(introspection_json)
-    mutations = build_mutation(introspection_json)
-
-    generate_grammar_file(
-        './grammar_{}.json'.format(datetime
-                                   .now()
-                                   .strftime("%Y-%m-%d-%H-%M-%S")),
-        objects, input_objects, queries, mutations, type="json")
-
-    #print(json.dumps(datatypes, indent=2))
-    #print(json.dumps(queries, indent=2))
-    #print(json.dumps(mutations, indent=2))
-
-    '''
