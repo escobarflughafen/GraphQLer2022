@@ -11,7 +11,6 @@ from connect import connect
 import sys
 sys.path.append(os.path.join(os.getcwd(), "graphql_types"))
 
-
 class SchemaBuilder:
     def __init__(self, url=None, introspection_json=None):
         if introspection_json:
