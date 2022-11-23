@@ -51,9 +51,10 @@ class FunctionBuilder:
             # or because of failed to check datatype dependency for the input names.
             for function_name, function_body in self.mutation_datatype_mappings.items():
                 checker = True
-                for input_name, input_body in function_body["inputDatatype"].items():
-                    if input_body != None:
-                        checker = False
+                if function_body["inputDatatype"] != None:
+                    for input_name, input_body in function_body["inputDatatype"].items():
+                        if input_body != None:
+                            checker = False
                 if checker:
                     function_list[function_name] = function_body
         else:
@@ -65,16 +66,18 @@ class FunctionBuilder:
                 # directly associated with the current datatype. This can filter out
                 # previously processed functions and make sure all selected function 
                 # have direct relationship with the current datatype.
-                for input_name, input_body in function_body["inputDatatype"].items():
-                    if input_body == current_datatype:
-                        checker = True
+                if function_body["inputDatatype"] != None:
+                    for input_name, input_body in function_body["inputDatatype"].items():
+                        if input_body == current_datatype:
+                            checker = True
                 # Then the 2nd loop is to filter out those parameters depending on datatypes
                 # that are not yet processed. These functions will be called at a later 
                 # time since every parameter will eventually being processed when there's 
                 # enough datatypes in the processed datatype list.
-                for input_name, input_body in function_body["inputDatatype"].items():
-                    if input_body not in datatype_list:
-                        checker = False
+                if checker:
+                    for input_name, input_body in function_body["inputDatatype"].items():
+                        if input_body not in datatype_list:
+                            checker = False
                 if checker:
                     function_list[function_name] = function_body
         return function_list
@@ -104,9 +107,10 @@ class FunctionBuilder:
             # or because of failed to check datatype dependency for the input names.
             for function_name, function_body in self.mutation_datatype_mappings.items():
                 checker = True
-                for input_name, input_body in function_body["inputDatatype"].items():
-                    if input_body != None:
-                        checker = False
+                if function_body["inputDatatype"] != None:
+                    for input_name, input_body in function_body["inputDatatype"].items():
+                        if input_body != None:
+                            checker = False
                 if checker:
                     function_list[function_name] = function_body
         else:
@@ -118,16 +122,18 @@ class FunctionBuilder:
                 # directly associated with the current datatype. This can filter out
                 # previously processed functions and make sure all selected function 
                 # have direct relationship with the current datatype.
-                for input_name, input_body in function_body["inputDatatype"].items():
-                    if input_body == current_datatype:
-                        checker = True
+                if function_body["inputDatatype"] != None:
+                    for input_name, input_body in function_body["inputDatatype"].items():
+                        if input_body == current_datatype:
+                            checker = True
                 # Then the 2nd loop is to filter out those parameters depending on datatypes
                 # that are not yet processed. These functions will be called at a later 
                 # time since every parameter will eventually being processed when there's 
                 # enough datatypes in the processed datatype list.
-                for input_name, input_body in function_body["inputDatatype"].items():
-                    if input_body not in datatype_list:
-                        checker = False
+                if checker:
+                    for input_name, input_body in function_body["inputDatatype"].items():
+                        if input_body not in datatype_list:
+                            checker = False
                 if checker:
                     function_list[function_name] = function_body
         return function_list
@@ -390,17 +396,17 @@ class FunctionBuilder:
 
 
 
-
-f = open("compiled_schema2.json", "r")
+f = open("shopify_compiled.json", 'r')
+#f = open("compiled_schema2.json", "r")
 objects = json.load(f)
 
 test = FunctionBuilder(objects)
 test1 = test.get_query_mappings()
 test2 = test.get_mutation_mappings()
-test4 = test.get_query_mapping_by_input_datatype()
-test5 = test.get_query_mapping_by_output_datatype("Query")
-test6 = test.get_mutation_mapping_by_input_datatype()
-test7 = test.get_mutation_mapping_by_output_datatype("Query")
+test4 = test.get_query_mapping_by_input_datatype("MailingAddress")
+test5 = test.get_query_mapping_by_output_datatype("MailingAddress")
+test6 = test.get_mutation_mapping_by_input_datatype("MailingAddress")
+test7 = test.get_mutation_mapping_by_output_datatype("MailingAddress")
 ##test5 = test.get_mutation_mapping("checkoutCompleteFree")
 test.print_function_list('function_list.txt')
 test3 = ""
