@@ -83,18 +83,6 @@ class FunctionBuilder:
         return function_list
 
 
-    # given current datatype, this function is to return all functions with matched 
-    # output datatype. Since there can be only 1 output datatype, there's no need 
-    # to check previous processed datatypes.
-    def get_query_mapping_by_output_datatype(self, current_datatype):
-        function_list = {}
-        for function_name, function_body in self.query_datatype_mappings.items():
-            if function_body["outputDatatype"]["name"] == current_datatype:
-                function_list[function_name] = function_body
-            elif self._search_function_output_datatype_recursive(current_datatype, function_body["outputDatatype"]["name"]):
-                function_list[function_name] = function_body
-        return function_list
-
     # given current datatype and all previously processed datatype list, this function
     # is to return all functions with at least 1 input parameters associated with 
     # current datatype, and all other parameters must associated with current or previous
@@ -141,29 +129,51 @@ class FunctionBuilder:
         return function_list
 
 
+
     # given current datatype, this function is to return all functions with matched 
     # output datatype. Since there can be only 1 output datatype, there's no need 
     # to check previous processed datatypes.
-    def get_mutation_mapping_by_output_datatype(self, current_datatype):
+    def get_query_mapping_by_output_datatype(self, current_datatype, explicit = False):
+        function_list = {}
+        for function_name, function_body in self.query_datatype_mappings.items():
+            if function_body["outputDatatype"]["name"] == current_datatype:
+                function_list[function_name] = function_body
+            # If no direct connection, we have to search inside the output object for inner objects
+            # Specify explicit to true to limit results with nonNull only
+            elif self._search_function_output_datatype_recursive(current_datatype, function_body["outputDatatype"]["name"], explicit):
+                function_list[function_name] = function_body
+        return function_list
+
+
+    # given current datatype, this function is to return all functions with matched 
+    # output datatype. Since there can be only 1 output datatype, there's no need 
+    # to check previous processed datatypes.
+    def get_mutation_mapping_by_output_datatype(self, current_datatype, explicit = False):
         function_list = {}
         for function_name, function_body in self.mutation_datatype_mappings.items():
             if function_body["outputDatatype"]["name"] == current_datatype:
                 function_list[function_name] = function_body
-            elif self._search_function_output_datatype_recursive(current_datatype, function_body["outputDatatype"]["name"]):
+            # If no direct connection, we have to search inside the output object for inner objects
+            # Specify explicit to true to limit results with nonNull only
+            elif self._search_function_output_datatype_recursive(current_datatype, function_body["outputDatatype"]["name"], explicit):
                 function_list[function_name] = function_body
                 
         return function_list
 
 
-    def _search_function_output_datatype_recursive(self, current_datatype, output_datatype):
+
+    def _search_function_output_datatype_recursive(self, current_datatype, output_datatype, explicit = False):
         output_objects = self.objects
-        # go through objects inside to do further check
+        # if 2 datatypes are matched, we return true immediately
         if current_datatype == output_datatype:
             return True
         else:
+            # else we search recursively for each objects inside the output datatype
+            # If explicit has been set to true we will only check for those objects 
+            # with nonNull value.
             for arg_name, arg_body in output_objects[output_datatype]["fields"].items():
                 arg_body = self._get_type(arg_body)
-                if arg_body["kind"] == "OBJECT":
+                if arg_body["kind"] == "OBJECT" and (not explicit or arg_body.get("nonNull") != None):
                     return self._search_function_output_datatype_recursive(current_datatype, arg_body["name"])
 
         return False
@@ -419,7 +429,7 @@ test2 = test.get_mutation_mappings()
 test4 = test.get_query_mapping_by_input_datatype("MailingAddress")
 test5 = test.get_query_mapping_by_output_datatype("MailingAddress")
 test6 = test.get_mutation_mapping_by_input_datatype("MailingAddress")
-test7 = test.get_mutation_mapping_by_output_datatype("MailingAddress")
+test7 = test.get_mutation_mapping_by_output_datatype("MailingAddress", True)
 ##test5 = test.get_mutation_mapping("checkoutCompleteFree")
 test.print_function_list('function_list.txt')
 test3 = ""
