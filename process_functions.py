@@ -1,18 +1,56 @@
 import json
+import re
 
 
 class FunctionBuilder:
 
-    def __init__(self, schema_json):
+    def __init__(self, schema_json, function_list_file_path = 'function_list.txt', query_datatype_file_path = None, mutation_datatype_file_path = None):
         self.schema_json = schema_json
         self.objects = schema_json["objects"]
         self.input_objects = schema_json["inputObjects"]
-        if schema_json.get("queries") != None:
+        if schema_json.get("queries") != None and query_datatype_file_path == None:
             self.queries = schema_json["queries"]
             self.query_datatype_mappings = self.link_functions_with_datatype("queries")
-        if schema_json.get("mutations") != None:
+        elif query_datatype_file_path != None:
+            f = open(query_datatype_file_path, 'r')
+            self.query_datatype_mappings = json.load(f)
+            f.close()
+        if schema_json.get("mutations") != None and mutation_datatype_file_path == None:
             self.mutations = schema_json["mutations"]
             self.mutation_datatype_mappings = self.link_functions_with_datatype("mutations")
+            self._check_function_type()
+        elif mutation_datatype_file_path != None:
+            f = open(mutation_datatype_file_path, 'r')
+            self.mutation_datatype_mappings = json.load(f)
+            f.close()
+        if function_list_file_path != None:
+            f = open(function_list_file_path, 'r')
+            data = f.readlines()
+            self.update_function_list(data)
+            f.close()
+
+
+    def update_function_list(self, newList):
+        for line in newList:
+            if line != "\n":
+                args = line.split('\t')
+                self.mutation_datatype_mappings[args[0]]['functionType'] = args[1].strip()
+        return
+
+    def get_query_mapping_by_input_datatype(self, datatype):
+        for function_name, function_body in self.query_datatype_mappings.items():
+            pass
+
+
+    def get_query_mapping_by_output_datatype(self, datatype):
+        pass
+
+    def get_mutation_mapping_by_input_datatype(self, datatype):
+        pass
+
+    def get_mutation_mapping_by_output_datatype(self, datatype):
+        pass
+
 
     def get_query_mappings(self):
         return self.query_datatype_mappings
@@ -26,6 +64,42 @@ class FunctionBuilder:
     def get_mutation_mapping(self, mutation_name):
         return self.mutation_datatype_mappings[mutation_name]
 
+    def print_function_list(self, path):
+        f = open(path, 'w')
+        for function_name, function_body in self.mutation_datatype_mappings.items():
+            f.writelines(function_name + "\t" + function_body['functionType'] + "\n")
+        f.close()
+        return
+
+    def print_mutation_datatype_list(self, path):
+        f = open(path, 'w')
+        json.dump(self.mutation_datatype_mappings, f)
+        f.close()
+        return
+
+    def print_query_datatype_list(self, path):
+        f = open(path, 'w')
+        json.dump(self.query_datatype_mappings, f)
+        f.close()
+        return
+
+    def _check_function_type(self):
+        function_objects = self.schema_json["mutations"]
+
+        for function_name, function_body in function_objects.items():
+            if re.search('[cC]reate|[aA]dd',function_name):
+                self.mutation_datatype_mappings[function_name]["functionType"] = "Create"
+            elif re.search('[dD]elete|[rR]emove',function_name):
+                self.mutation_datatype_mappings[function_name]["functionType"] = "Delete"
+            elif re.search('[uU]pdate',function_name):
+                self.mutation_datatype_mappings[function_name]["functionType"] = "Update"
+            else:
+                self.mutation_datatype_mappings[function_name]["functionType"] = "Unknown"
+        
+        return
+
+
+
     def link_functions_with_datatype(self, category):
         list = {}
         function_objects = self.schema_json[category]
@@ -38,7 +112,7 @@ class FunctionBuilder:
             output_data_type = self._get_type(output)
 
             # Since I assume every output is actually an Object, so I actually did not check for any other datatypes.
-            if output_data_type["kind"] == "OBJECT":
+            if output_data_type["kind"] == "OBJECT" or output_data_type["kind"] == "SCALAR":
                 list[function_name] = {}
                 # here I just copy the raw data just in case
                 list[function_name]["rawdata"] = function_body
@@ -67,16 +141,66 @@ class FunctionBuilder:
                     elif arg_data_type["kind"] == "INPUT_OBJECT":
                         list[function_name]["inputDatatype"][arg_name] = self._search_related_object_from_input_object(arg_data_type["name"], arg_name, output_data_type["name"])
 
-            elif output_data_type == "SCALAR":
+            elif output_data_type["kind"] == "SCALAR":
+                list[function_name] = {}
+                # here I just copy the raw data just in case
+                list[function_name]["rawdata"] = function_body
+                list[function_name]["inputDatatype"] = {}
+
+                # since the output will be a single Object, we just copy its original structure here
+                list[function_name]["outputDatatype"] = output_data_type
+
+                # then we check for any input items and see if it match any of the Objects
+                for arg_name, arg_body in function_body["args"].items():
+                    # again we only focus on the real Object, not the status like LIST or something
+                    arg_data_type = self._get_type(arg_body)
+                    # if the scalar type is ID and the output is scalar, there's no way to find
+                    # the related datatype. Thus we will just put a None for now. 
+                    if arg_data_type["kind"] == "SCALAR" and arg_data_type["name"] == "ID":
+                        list[function_name]["inputDatatype"][arg_name] = None
+                    # if it is other scalar or enum type we will search the scalar-datatype list
+                    # to look for matching names.
+                    elif arg_data_type["kind"] == "SCALAR" or arg_data_type["kind"] == "ENUM":
+                        list[function_name]["inputDatatype"][arg_name] = self._get_scalar_with_datatype(arg_name)
+                    # Similar as the input object type, even if there's an ID inside of it,
+                    # we are unable to check for the related datatype. Thus we will put a None
+                    # in here as well.
+                    elif arg_data_type["kind"] == "INPUT_OBJECT":
+                        list[function_name]["inputDatatype"][arg_name] = None
+
+            elif output_data_type["kind"] == "INTERFACE":
                 pass
-            elif output_data_type == "INTERFACE":
+            elif output_data_type["kind"] == "UNION":
+                list[function_name] = {}
+                # here I just copy the raw data just in case
+                list[function_name]["rawdata"] = function_body
+                list[function_name]["inputDatatype"] = {}
+
+                # since the output will be a single Object, we just copy its original structure here
+                list[function_name]["outputDatatype"] = output_data_type
+
+                # then we check for any input items and see if it match any of the Objects
+                for arg_name, arg_body in function_body["args"].items():
+                    # again we only focus on the real Object, not the status like LIST or something
+                    arg_data_type = self._get_type(arg_body)
+                    # if the scalar type is ID and the output is scalar, there's no way to find
+                    # the related datatype. Thus we will just put a None for now. 
+                    if arg_data_type["kind"] == "SCALAR" and arg_data_type["name"] == "ID":
+                        list[function_name]["inputDatatype"][arg_name] = None
+                    # if it is other scalar or enum type we will search the scalar-datatype list
+                    # to look for matching names.
+                    elif arg_data_type["kind"] == "SCALAR" or arg_data_type["kind"] == "ENUM":
+                        list[function_name]["inputDatatype"][arg_name] = self._get_scalar_with_datatype(arg_name)
+                    # Similar as the input object type, even if there's an ID inside of it,
+                    # we are unable to check for the related datatype. Thus we will put a None
+                    # in here as well.
+                    elif arg_data_type["kind"] == "INPUT_OBJECT":
+                        list[function_name]["inputDatatype"][arg_name] = None
+            elif output_data_type["kind"] == "ENUM":
                 pass
-            elif output_data_type == "UNION":
-                pass
-            elif output_data_type == "ENUM":
-                pass
-            elif output_data_type == "INPUT_OBJECT":
-                pass
+            # This should be impossible, but we just put it here just in case.
+            # elif output_data_type["kind"] == "INPUT_OBJECT":
+            #    pass
 
         return list
 
@@ -154,13 +278,14 @@ class FunctionBuilder:
 
 
 
-f = open("schema.json", "r")
+f = open("compiled_schema2.json", "r")
 objects = json.load(f)
 
 test = FunctionBuilder(objects)
 test1 = test.get_query_mappings()
 test2 = test.get_mutation_mappings()
-test4 = test.get_query_mapping("customer")
-test5 = test.get_mutation_mapping("checkoutCompleteFree")
+##test4 = test.get_query_mapping("customer")
+##test5 = test.get_mutation_mapping("checkoutCompleteFree")
+test.print_function_list('function_list.txt')
 test3 = ""
 
