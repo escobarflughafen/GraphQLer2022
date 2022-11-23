@@ -37,19 +37,51 @@ class FunctionBuilder:
                 self.mutation_datatype_mappings[args[0]]['functionType'] = args[1].strip()
         return
 
-    def get_query_mapping_by_input_datatype(self, datatype):
+    def get_query_mapping_by_input_datatype(self, current_datatype, datatype_list):
+        function_list = {}
+        datatype_list.append(current_datatype)
         for function_name, function_body in self.query_datatype_mappings.items():
-            pass
+            checker = False
+            for input_name, input_body in function_body["inputDatatype"].items():
+                if input_body == current_datatype:
+                    checker = True
+            for input_name, input_body in function_body["inputDatatype"].items():
+                if input_body not in datatype_list:
+                    checker = False
+            if checker:
+                function_list[function_name] = function_body
+        return function_list
 
 
-    def get_query_mapping_by_output_datatype(self, datatype):
-        pass
+    def get_query_mapping_by_output_datatype(self, current_datatype):
+        function_list = {}
+        for function_name, function_body in self.query_datatype_mappings.items():
+            if function_body["outputDatatype"]["name"] == current_datatype:
+                function_list[function_name] = function_body
+        return function_list
 
-    def get_mutation_mapping_by_input_datatype(self, datatype):
-        pass
 
-    def get_mutation_mapping_by_output_datatype(self, datatype):
-        pass
+    def get_mutation_mapping_by_input_datatype(self, current_datatype, datatype_list):
+        function_list = {}
+        datatype_list.append(current_datatype)
+        for function_name, function_body in self.mutation_datatype_mappings.items():
+            checker = False
+            for input_name, input_body in function_body["inputDatatype"].items():
+                if input_body == current_datatype:
+                    checker = True
+            for input_name, input_body in function_body["inputDatatype"].items():
+                if input_body not in datatype_list:
+                    checker = False
+            if checker:
+                function_list[function_name] = function_body
+        return function_list
+
+    def get_mutation_mapping_by_output_datatype(self, current_datatype):
+        function_list = {}
+        for function_name, function_body in self.mutation_datatype_mappings.items():
+            if function_body["outputDatatype"]["name"] == current_datatype:
+                function_list[function_name] = function_body
+        return function_list
 
 
     def get_query_mappings(self):
@@ -284,7 +316,10 @@ objects = json.load(f)
 test = FunctionBuilder(objects)
 test1 = test.get_query_mappings()
 test2 = test.get_mutation_mappings()
-##test4 = test.get_query_mapping("customer")
+test4 = test.get_query_mapping_by_input_datatype("LegacyCoupon", [])
+test5 = test.get_query_mapping_by_output_datatype("LegacyCoupon")
+test6 = test.get_mutation_mapping_by_input_datatype("LegacyCoupon", [])
+test7 = test.get_mutation_mapping_by_output_datatype("LegacyCoupon")
 ##test5 = test.get_mutation_mapping("checkoutCompleteFree")
 test.print_function_list('function_list.txt')
 test3 = ""

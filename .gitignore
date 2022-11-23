@@ -13,3 +13,8 @@ __pycache__/
 
 # VScode
 .vscode/settings.json
+
+compiled_schema2.json
+schema2.json
+schema.json
+function_list.txt
