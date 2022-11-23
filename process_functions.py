@@ -240,7 +240,7 @@ class FunctionBuilder:
             output_data_type = self._get_type(output)
 
             # Since I assume every output is actually an Object, so I actually did not check for any other datatypes.
-            if output_data_type["kind"] == "OBJECT" or output_data_type["kind"] == "SCALAR":
+            if output_data_type["kind"] == "OBJECT":
                 list[function_name] = {}
                 # here I just copy the raw data just in case
                 list[function_name]["rawdata"] = function_body
@@ -429,7 +429,7 @@ test2 = test.get_mutation_mappings()
 test4 = test.get_query_mapping_by_input_datatype("MailingAddress")
 test5 = test.get_query_mapping_by_output_datatype("MailingAddress")
 test6 = test.get_mutation_mapping_by_input_datatype("MailingAddress")
-test7 = test.get_mutation_mapping_by_output_datatype("MailingAddress", True)
+test7 = test.get_mutation_mapping_by_output_datatype("MailingAddress")
 ##test5 = test.get_mutation_mapping("checkoutCompleteFree")
 test.print_function_list('function_list.txt')
 test3 = ""
