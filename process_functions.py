@@ -76,7 +76,7 @@ class FunctionBuilder:
                 # enough datatypes in the processed datatype list.
                 if checker:
                     for input_name, input_body in function_body["inputDatatype"].items():
-                        if input_body not in datatype_list:
+                        if (input_body not in datatype_list) and input_body != None:
                             checker = False
                 if checker:
                     function_list[function_name] = function_body
@@ -90,6 +90,8 @@ class FunctionBuilder:
         function_list = {}
         for function_name, function_body in self.query_datatype_mappings.items():
             if function_body["outputDatatype"]["name"] == current_datatype:
+                function_list[function_name] = function_body
+            elif self._search_function_output_datatype_recursive(current_datatype, function_body["outputDatatype"]["name"]):
                 function_list[function_name] = function_body
         return function_list
 
@@ -132,7 +134,7 @@ class FunctionBuilder:
                 # enough datatypes in the processed datatype list.
                 if checker:
                     for input_name, input_body in function_body["inputDatatype"].items():
-                        if input_body not in datatype_list:
+                        if (input_body not in datatype_list) and input_body != None:
                             checker = False
                 if checker:
                     function_list[function_name] = function_body
@@ -147,7 +149,24 @@ class FunctionBuilder:
         for function_name, function_body in self.mutation_datatype_mappings.items():
             if function_body["outputDatatype"]["name"] == current_datatype:
                 function_list[function_name] = function_body
+            elif self._search_function_output_datatype_recursive(current_datatype, function_body["outputDatatype"]["name"]):
+                function_list[function_name] = function_body
+                
         return function_list
+
+
+    def _search_function_output_datatype_recursive(self, current_datatype, output_datatype):
+        output_objects = self.objects
+        # go through objects inside to do further check
+        if current_datatype == output_datatype:
+            return True
+        else:
+            for arg_name, arg_body in output_objects[output_datatype]["fields"].items():
+                arg_body = self._get_type(arg_body)
+                if arg_body["kind"] == "OBJECT":
+                    return self._search_function_output_datatype_recursive(current_datatype, arg_body["name"])
+
+        return False
 
 
     def get_query_mappings(self):
@@ -171,18 +190,12 @@ class FunctionBuilder:
 
 
     def print_mutation_datatype_list(self, path):
-        '''
-        
-        '''
         f = open(path, 'w')
         json.dump(self.mutation_datatype_mappings, f)
         f.close()
         return
 
     def print_query_datatype_list(self, path):
-        '''
-        123
-        '''
         f = open(path, 'w')
         json.dump(self.query_datatype_mappings, f)
         f.close()
