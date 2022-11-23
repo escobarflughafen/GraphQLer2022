@@ -37,14 +37,28 @@ class FunctionBuilder:
                 self.mutation_datatype_mappings[args[0]]['functionType'] = args[1].strip()
         return
 
+    # given current datatype and all previously processed datatype list, this function
+    # is to return all functions with at least 1 input parameters associated with 
+    # current datatype, and all other parameters must associated with current or previous
+    # processed datatypes. This is to figure out which function to be added into the 
+    # fuzzing list.
     def get_query_mapping_by_input_datatype(self, current_datatype, datatype_list):
         function_list = {}
+        # this is to add the current datatype to the datatype list for the 2nd loop
         datatype_list.append(current_datatype)
         for function_name, function_body in self.query_datatype_mappings.items():
             checker = False
+            # In this first loop we are focusing on finding at lease 1 parameter
+            # directly associated with the current datatype. This can filter out
+            # previously processed functions and make sure all selected function 
+            # have direct relationship with the current datatype.
             for input_name, input_body in function_body["inputDatatype"].items():
                 if input_body == current_datatype:
                     checker = True
+            # Then the 2nd loop is to filter out those parameters depending on datatypes
+            # that are not yet processed. These functions will be called at a later 
+            # time since every parameter will eventually being processed when there's 
+            # enough datatypes in the processed datatype list.
             for input_name, input_body in function_body["inputDatatype"].items():
                 if input_body not in datatype_list:
                     checker = False
@@ -53,6 +67,9 @@ class FunctionBuilder:
         return function_list
 
 
+    # given current datatype, this function is to return all functions with matched 
+    # output datatype. Since there can be only 1 output datatype, there's no need 
+    # to check previous processed datatypes.
     def get_query_mapping_by_output_datatype(self, current_datatype):
         function_list = {}
         for function_name, function_body in self.query_datatype_mappings.items():
@@ -61,14 +78,28 @@ class FunctionBuilder:
         return function_list
 
 
+    # given current datatype and all previously processed datatype list, this function
+    # is to return all functions with at least 1 input parameters associated with 
+    # current datatype, and all other parameters must associated with current or previous
+    # processed datatypes. This is to figure out which function to be added into the 
+    # fuzzing list.
     def get_mutation_mapping_by_input_datatype(self, current_datatype, datatype_list):
         function_list = {}
+        # this is to add the current datatype to the datatype list for the 2nd loop
         datatype_list.append(current_datatype)
         for function_name, function_body in self.mutation_datatype_mappings.items():
             checker = False
+            # In this first loop we are focusing on finding at lease 1 parameter
+            # directly associated with the current datatype. This can filter out
+            # previously processed functions and make sure all selected function 
+            # have direct relationship with the current datatype.
             for input_name, input_body in function_body["inputDatatype"].items():
                 if input_body == current_datatype:
                     checker = True
+            # Then the 2nd loop is to filter out those parameters depending on datatypes
+            # that are not yet processed. These functions will be called at a later 
+            # time since every parameter will eventually being processed when there's 
+            # enough datatypes in the processed datatype list.
             for input_name, input_body in function_body["inputDatatype"].items():
                 if input_body not in datatype_list:
                     checker = False
@@ -76,6 +107,10 @@ class FunctionBuilder:
                 function_list[function_name] = function_body
         return function_list
 
+
+    # given current datatype, this function is to return all functions with matched 
+    # output datatype. Since there can be only 1 output datatype, there's no need 
+    # to check previous processed datatypes.
     def get_mutation_mapping_by_output_datatype(self, current_datatype):
         function_list = {}
         for function_name, function_body in self.mutation_datatype_mappings.items():
