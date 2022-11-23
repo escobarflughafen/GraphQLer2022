@@ -82,8 +82,6 @@ if __name__ == '__main__':
         else:
             raise Exception("please add corrent introspection source to arguments by --url or --introspection-json")
 
-        #print(schema_builder.schema)
-        #print(schema_builder.prepared_schema)
 
         selected_query = schema_builder.prepared_schema["queries"]["messages"]
         selected_query.prepare_payload(schema_builder.schema["inputObjects"], schema_builder.schema["objects"])
