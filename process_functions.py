@@ -4,7 +4,7 @@ import re
 
 class FunctionBuilder:
 
-    def __init__(self, schema_json, function_list_file_path = 'function_list.txt', query_datatype_file_path = None, mutation_datatype_file_path = None):
+    def __init__(self, schema_json, function_list_file_path = None, query_datatype_file_path = None, mutation_datatype_file_path = None):
         self.schema_json = schema_json
         self.objects = schema_json["objects"]
         self.input_objects = schema_json["inputObjects"]
@@ -42,28 +42,41 @@ class FunctionBuilder:
     # current datatype, and all other parameters must associated with current or previous
     # processed datatypes. This is to figure out which function to be added into the 
     # fuzzing list.
-    def get_query_mapping_by_input_datatype(self, current_datatype, datatype_list):
+    def get_query_mapping_by_input_datatype(self, current_datatype = None, datatype_list = []):
         function_list = {}
-        # this is to add the current datatype to the datatype list for the 2nd loop
-        datatype_list.append(current_datatype)
-        for function_name, function_body in self.query_datatype_mappings.items():
-            checker = False
-            # In this first loop we are focusing on finding at lease 1 parameter
-            # directly associated with the current datatype. This can filter out
-            # previously processed functions and make sure all selected function 
-            # have direct relationship with the current datatype.
-            for input_name, input_body in function_body["inputDatatype"].items():
-                if input_body == current_datatype:
-                    checker = True
-            # Then the 2nd loop is to filter out those parameters depending on datatypes
-            # that are not yet processed. These functions will be called at a later 
-            # time since every parameter will eventually being processed when there's 
-            # enough datatypes in the processed datatype list.
-            for input_name, input_body in function_body["inputDatatype"].items():
-                if input_body not in datatype_list:
-                    checker = False
-            if checker:
-                function_list[function_name] = function_body
+        if current_datatype == None:
+            # Sometimes we will need to get all functions that have independent input datas
+            # such as scalar only type or no input. In this case we will return all functions
+            # without any datatype dependency. Note that this can be true independent function,
+            # or because of failed to check datatype dependency for the input names.
+            for function_name, function_body in self.mutation_datatype_mappings.items():
+                checker = True
+                for input_name, input_body in function_body["inputDatatype"].items():
+                    if input_body != None:
+                        checker = False
+                if checker:
+                    function_list[function_name] = function_body
+        else:
+            # this is to add the current datatype to the datatype list for the 2nd loop
+            datatype_list.append(current_datatype)
+            for function_name, function_body in self.query_datatype_mappings.items():
+                checker = False
+                # In this first loop we are focusing on finding at lease 1 parameter
+                # directly associated with the current datatype. This can filter out
+                # previously processed functions and make sure all selected function 
+                # have direct relationship with the current datatype.
+                for input_name, input_body in function_body["inputDatatype"].items():
+                    if input_body == current_datatype:
+                        checker = True
+                # Then the 2nd loop is to filter out those parameters depending on datatypes
+                # that are not yet processed. These functions will be called at a later 
+                # time since every parameter will eventually being processed when there's 
+                # enough datatypes in the processed datatype list.
+                for input_name, input_body in function_body["inputDatatype"].items():
+                    if input_body not in datatype_list:
+                        checker = False
+                if checker:
+                    function_list[function_name] = function_body
         return function_list
 
 
@@ -77,34 +90,46 @@ class FunctionBuilder:
                 function_list[function_name] = function_body
         return function_list
 
-
     # given current datatype and all previously processed datatype list, this function
     # is to return all functions with at least 1 input parameters associated with 
     # current datatype, and all other parameters must associated with current or previous
     # processed datatypes. This is to figure out which function to be added into the 
     # fuzzing list.
-    def get_mutation_mapping_by_input_datatype(self, current_datatype, datatype_list):
+    def get_mutation_mapping_by_input_datatype(self, current_datatype = None, datatype_list = []):
         function_list = {}
-        # this is to add the current datatype to the datatype list for the 2nd loop
-        datatype_list.append(current_datatype)
-        for function_name, function_body in self.mutation_datatype_mappings.items():
-            checker = False
-            # In this first loop we are focusing on finding at lease 1 parameter
-            # directly associated with the current datatype. This can filter out
-            # previously processed functions and make sure all selected function 
-            # have direct relationship with the current datatype.
-            for input_name, input_body in function_body["inputDatatype"].items():
-                if input_body == current_datatype:
-                    checker = True
-            # Then the 2nd loop is to filter out those parameters depending on datatypes
-            # that are not yet processed. These functions will be called at a later 
-            # time since every parameter will eventually being processed when there's 
-            # enough datatypes in the processed datatype list.
-            for input_name, input_body in function_body["inputDatatype"].items():
-                if input_body not in datatype_list:
-                    checker = False
-            if checker:
-                function_list[function_name] = function_body
+        if current_datatype == None:
+            # Sometimes we will need to get all functions that have independent input datas
+            # such as scalar only type or no input. In this case we will return all functions
+            # without any datatype dependency. Note that this can be true independent function,
+            # or because of failed to check datatype dependency for the input names.
+            for function_name, function_body in self.mutation_datatype_mappings.items():
+                checker = True
+                for input_name, input_body in function_body["inputDatatype"].items():
+                    if input_body != None:
+                        checker = False
+                if checker:
+                    function_list[function_name] = function_body
+        else:
+            # this is to add the current datatype to the datatype list for the 2nd loop
+            datatype_list.append(current_datatype)
+            for function_name, function_body in self.mutation_datatype_mappings.items():
+                checker = False
+                # In this first loop we are focusing on finding at lease 1 parameter
+                # directly associated with the current datatype. This can filter out
+                # previously processed functions and make sure all selected function 
+                # have direct relationship with the current datatype.
+                for input_name, input_body in function_body["inputDatatype"].items():
+                    if input_body == current_datatype:
+                        checker = True
+                # Then the 2nd loop is to filter out those parameters depending on datatypes
+                # that are not yet processed. These functions will be called at a later 
+                # time since every parameter will eventually being processed when there's 
+                # enough datatypes in the processed datatype list.
+                for input_name, input_body in function_body["inputDatatype"].items():
+                    if input_body not in datatype_list:
+                        checker = False
+                if checker:
+                    function_list[function_name] = function_body
         return function_list
 
 
@@ -138,13 +163,20 @@ class FunctionBuilder:
         f.close()
         return
 
+
     def print_mutation_datatype_list(self, path):
+        '''
+        
+        '''
         f = open(path, 'w')
         json.dump(self.mutation_datatype_mappings, f)
         f.close()
         return
 
     def print_query_datatype_list(self, path):
+        '''
+        123
+        '''
         f = open(path, 'w')
         json.dump(self.query_datatype_mappings, f)
         f.close()
@@ -188,25 +220,29 @@ class FunctionBuilder:
                 # since the output will be a single Object, we just copy its original structure here
                 list[function_name]["outputDatatype"] = output_data_type
 
-                # then we check for any input items and see if it match any of the Objects
-                for arg_name, arg_body in function_body["args"].items():
-                    # again we only focus on the real Object, not the status like LIST or something
-                    arg_data_type = self._get_type(arg_body)
-                    # if the scalar type is ID, then we want to find if there's any ID exists
-                    # in the output datatype. If exists, we will assume that the input ID here 
-                    # is related to one of the output datatype (we search recursively for every 
-                    # child objects inside the output object).
-                    if arg_data_type["kind"] == "SCALAR" and arg_data_type["name"] == "ID":
-                        list[function_name]["inputDatatype"][arg_name] = self._search_related_object(arg_name, output_data_type["name"])
-                    # if it is other scalar or enum type we will search the scalar-datatype list
-                    # to look for matching names.
-                    elif arg_data_type["kind"] == "SCALAR" or arg_data_type["kind"] == "ENUM":
-                        list[function_name]["inputDatatype"][arg_name] = self._get_scalar_with_datatype(arg_name)
-                    # Otherwise if it is an input object, we want to know if there's any ID type
-                    # inside the input object. Then we are basically doing similar things by searching
-                    # inside the output datatype and find the mapping.
-                    elif arg_data_type["kind"] == "INPUT_OBJECT":
-                        list[function_name]["inputDatatype"][arg_name] = self._search_related_object_from_input_object(arg_data_type["name"], arg_name, output_data_type["name"])
+                # First we check if the function has input
+                if function_body["args"] != None:
+                    # then we check for any input items and see if it match any of the Objects
+                    for arg_name, arg_body in function_body["args"].items():
+                        # again we only focus on the real Object, not the status like LIST or something
+                        arg_data_type = self._get_type(arg_body)
+                        # if the scalar type is ID, then we want to find if there's any ID exists
+                        # in the output datatype. If exists, we will assume that the input ID here 
+                        # is related to one of the output datatype (we search recursively for every 
+                        # child objects inside the output object).
+                        if arg_data_type["kind"] == "SCALAR" and arg_data_type["name"] == "ID":
+                            list[function_name]["inputDatatype"][arg_name] = self._search_related_object(arg_name, output_data_type["name"])
+                        # if it is other scalar or enum type we will search the scalar-datatype list
+                        # to look for matching names.
+                        elif arg_data_type["kind"] == "SCALAR" or arg_data_type["kind"] == "ENUM":
+                            list[function_name]["inputDatatype"][arg_name] = self._get_scalar_with_datatype(arg_name)
+                        # Otherwise if it is an input object, we want to know if there's any ID type
+                        # inside the input object. Then we are basically doing similar things by searching
+                        # inside the output datatype and find the mapping.
+                        elif arg_data_type["kind"] == "INPUT_OBJECT":
+                            list[function_name]["inputDatatype"][arg_name] = self._search_related_object_from_input_object(arg_data_type["name"], arg_name, output_data_type["name"])
+                else:
+                    list[function_name]["inputDatatype"] = None
 
             elif output_data_type["kind"] == "SCALAR":
                 list[function_name] = {}
@@ -217,23 +253,27 @@ class FunctionBuilder:
                 # since the output will be a single Object, we just copy its original structure here
                 list[function_name]["outputDatatype"] = output_data_type
 
-                # then we check for any input items and see if it match any of the Objects
-                for arg_name, arg_body in function_body["args"].items():
-                    # again we only focus on the real Object, not the status like LIST or something
-                    arg_data_type = self._get_type(arg_body)
-                    # if the scalar type is ID and the output is scalar, there's no way to find
-                    # the related datatype. Thus we will just put a None for now. 
-                    if arg_data_type["kind"] == "SCALAR" and arg_data_type["name"] == "ID":
-                        list[function_name]["inputDatatype"][arg_name] = None
-                    # if it is other scalar or enum type we will search the scalar-datatype list
-                    # to look for matching names.
-                    elif arg_data_type["kind"] == "SCALAR" or arg_data_type["kind"] == "ENUM":
-                        list[function_name]["inputDatatype"][arg_name] = self._get_scalar_with_datatype(arg_name)
-                    # Similar as the input object type, even if there's an ID inside of it,
-                    # we are unable to check for the related datatype. Thus we will put a None
-                    # in here as well.
-                    elif arg_data_type["kind"] == "INPUT_OBJECT":
-                        list[function_name]["inputDatatype"][arg_name] = None
+                # First we check if the function has input
+                if function_body["args"] != None:
+                    # then we check for any input items and see if it match any of the Objects
+                    for arg_name, arg_body in function_body["args"].items():
+                        # again we only focus on the real Object, not the status like LIST or something
+                        arg_data_type = self._get_type(arg_body)
+                        # if the scalar type is ID and the output is scalar, there's no way to find
+                        # the related datatype. Thus we will just put a None for now. 
+                        if arg_data_type["kind"] == "SCALAR" and arg_data_type["name"] == "ID":
+                            list[function_name]["inputDatatype"][arg_name] = None
+                        # if it is other scalar or enum type we will search the scalar-datatype list
+                        # to look for matching names.
+                        elif arg_data_type["kind"] == "SCALAR" or arg_data_type["kind"] == "ENUM":
+                            list[function_name]["inputDatatype"][arg_name] = self._get_scalar_with_datatype(arg_name)
+                        # Similar as the input object type, even if there's an ID inside of it,
+                        # we are unable to check for the related datatype. Thus we will put a None
+                        # in here as well.
+                        elif arg_data_type["kind"] == "INPUT_OBJECT":
+                            list[function_name]["inputDatatype"][arg_name] = None
+                else:
+                    list[function_name]["inputDatatype"] = None
 
             elif output_data_type["kind"] == "INTERFACE":
                 pass
@@ -246,23 +286,29 @@ class FunctionBuilder:
                 # since the output will be a single Object, we just copy its original structure here
                 list[function_name]["outputDatatype"] = output_data_type
 
-                # then we check for any input items and see if it match any of the Objects
-                for arg_name, arg_body in function_body["args"].items():
-                    # again we only focus on the real Object, not the status like LIST or something
-                    arg_data_type = self._get_type(arg_body)
-                    # if the scalar type is ID and the output is scalar, there's no way to find
-                    # the related datatype. Thus we will just put a None for now. 
-                    if arg_data_type["kind"] == "SCALAR" and arg_data_type["name"] == "ID":
-                        list[function_name]["inputDatatype"][arg_name] = None
-                    # if it is other scalar or enum type we will search the scalar-datatype list
-                    # to look for matching names.
-                    elif arg_data_type["kind"] == "SCALAR" or arg_data_type["kind"] == "ENUM":
-                        list[function_name]["inputDatatype"][arg_name] = self._get_scalar_with_datatype(arg_name)
-                    # Similar as the input object type, even if there's an ID inside of it,
-                    # we are unable to check for the related datatype. Thus we will put a None
-                    # in here as well.
-                    elif arg_data_type["kind"] == "INPUT_OBJECT":
-                        list[function_name]["inputDatatype"][arg_name] = None
+                # First we check if the function has input
+                if function_body["args"] != None:
+                    # then we check for any input items and see if it match any of the Objects
+                    for arg_name, arg_body in function_body["args"].items():
+                        # again we only focus on the real Object, not the status like LIST or something
+                        arg_data_type = self._get_type(arg_body)
+                        # if the scalar type is ID and the output is scalar, there's no way to find
+                        # the related datatype. Thus we will just put a None for now. 
+                        if arg_data_type["kind"] == "SCALAR" and arg_data_type["name"] == "ID":
+                            list[function_name]["inputDatatype"][arg_name] = None
+                        # if it is other scalar or enum type we will search the scalar-datatype list
+                        # to look for matching names.
+                        elif arg_data_type["kind"] == "SCALAR" or arg_data_type["kind"] == "ENUM":
+                            list[function_name]["inputDatatype"][arg_name] = self._get_scalar_with_datatype(arg_name)
+                        # Similar as the input object type, even if there's an ID inside of it,
+                        # we are unable to check for the related datatype. Thus we will put a None
+                        # in here as well.
+                        elif arg_data_type["kind"] == "INPUT_OBJECT":
+                            list[function_name]["inputDatatype"][arg_name] = None
+                else:
+                    list[function_name]["inputDatatype"] = None
+
+
             elif output_data_type["kind"] == "ENUM":
                 pass
             # This should be impossible, but we just put it here just in case.
@@ -351,10 +397,10 @@ objects = json.load(f)
 test = FunctionBuilder(objects)
 test1 = test.get_query_mappings()
 test2 = test.get_mutation_mappings()
-test4 = test.get_query_mapping_by_input_datatype("LegacyCoupon", [])
-test5 = test.get_query_mapping_by_output_datatype("LegacyCoupon")
-test6 = test.get_mutation_mapping_by_input_datatype("LegacyCoupon", [])
-test7 = test.get_mutation_mapping_by_output_datatype("LegacyCoupon")
+test4 = test.get_query_mapping_by_input_datatype()
+test5 = test.get_query_mapping_by_output_datatype("Query")
+test6 = test.get_mutation_mapping_by_input_datatype()
+test7 = test.get_mutation_mapping_by_output_datatype("Query")
 ##test5 = test.get_mutation_mapping("checkoutCompleteFree")
 test.print_function_list('function_list.txt')
 test3 = ""
