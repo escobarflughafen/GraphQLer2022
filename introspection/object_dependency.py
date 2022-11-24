@@ -1,15 +1,20 @@
 from queue import Queue
 import json
+import os
+
+# TODO: User input processed introspection Json file.
 
 #SCHEMAPATH = "./introspection/schema.json"
 SCHEMAPATH = "./introspection/shopify_schema.json"
 
+# TODO: Consider checking Union before making the sequence.
 
 class ObjectSequenceBuilder:
-    def __init__(self, schema):
-        self.object_schema = schema["objects"]
+    def __init__(self, SCHEMAPATH):
+        self.object_schema = json.load(open(SCHEMAPATH))["objects"]
         self.object_queue = Queue()
         self.object_sequence = []
+        self.unsolved_object = []
 
         self.prev_object_count = 0
 
@@ -20,9 +25,6 @@ class ObjectSequenceBuilder:
 
         # Add an marker to indicate the end of the queue.
         self.object_queue.put(0)
-        print("Initial object counts:")
-        print(self.prev_object_count)
-        print()
 
 
     def get_base_type_detail(self, type_def):
@@ -77,9 +79,6 @@ class ObjectSequenceBuilder:
             if ob == 0:
                 # Cannot release any object from the queue (cyclic dependency).
                 if self.prev_object_count == self.object_queue.qsize():
-                    print("Unsolve objects count:")
-                    print(self.prev_object_count)
-                    print()
                     break
                 else:
                     self.prev_object_count = self.object_queue.qsize()
@@ -94,4 +93,29 @@ class ObjectSequenceBuilder:
                     else:
                         self.object_queue.put(ob)
 
-        return (self.object_sequence, self.object_queue)
+        while not self.object_queue.empty():
+            self.unsolved_object.append(self.object_queue.get())
+        
+        # TODO: User input path output file path.
+        self.generate_object_sequence_file("./object_sequence.json")
+        
+        # Test remove later
+        return (self.object_sequence, self.unsolved_object)
+
+    
+    # TODO: User input path output file path.
+    def generate_object_sequence_file(self, path):
+        '''
+        Generate a file contains object sequence for user to review.
+        '''
+        f = open(path, 'w')
+        grammar = {
+            "object_senquence": self.object_sequence,
+            "unsolved_objects": self.unsolved_object
+        }
+        json.dump(grammar, f)
+        f.close()
+
+
+obsb = ObjectSequenceBuilder("./compiled_schema2.json")
+object_sequence, unsolved_objects = obsb.build_sequence()

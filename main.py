@@ -2,7 +2,7 @@ import argparse
 import time
 from os import error
 import introspection.parse as parse
-from object_dependency import ObjectSequenceBuilder
+from introspection.object_dependency import ObjectSequenceBuilder
 import json
 
 def get_args():
@@ -68,7 +68,8 @@ if __name__ == '__main__':
             schema_builder.dump()
         
     # testest
-    obsb = ObjectSequenceBuilder("./schema.json")
+    # TODO: User input processed introspection Json file!
+    obsb = ObjectSequenceBuilder("./shopify_compiled.json")
     object_sequence, unsolved_objects = obsb.build_sequence()
     print("Final sequence:")
     for i in object_sequence:
@@ -76,7 +77,6 @@ if __name__ == '__main__':
 
     print()
     print("Unsolevd objects:")
-    while not unsolved_objects.empty():
-        print(unsolved_objects.get())
+
     # test end
         
