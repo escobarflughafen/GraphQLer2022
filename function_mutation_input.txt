@@ -1,0 +1,44 @@
+createAuthor:
+  input:
+    input: null
+  output:
+    kind: OBJECT
+    name: Author
+    ofType: null
+createMessage:
+  input:
+    input: Author
+  output:
+    kind: OBJECT
+    name: Message
+    ofType: null
+deleteAuthor:
+  input:
+    id: Author
+  output:
+    kind: OBJECT
+    name: Author
+    ofType: null
+deleteMessage:
+  input:
+    id: Message
+  output:
+    kind: OBJECT
+    name: Message
+    ofType: null
+updateAuthor:
+  input:
+    id: Author
+    input: null
+  output:
+    kind: OBJECT
+    name: Author
+    ofType: null
+updateMessage:
+  input:
+    id: Message
+    input: Message
+  output:
+    kind: OBJECT
+    name: Message
+    ofType: null

@@ -1,0 +1,22 @@
+authors:
+  input: null
+  output:
+    kind: OBJECT
+    name: Author
+getAuthor:
+  input:
+    id: Author
+  output:
+    kind: OBJECT
+    name: Author
+getMessage:
+  input:
+    id: Message
+  output:
+    kind: OBJECT
+    name: Message
+messages:
+  input: null
+  output:
+    kind: OBJECT
+    name: Message
