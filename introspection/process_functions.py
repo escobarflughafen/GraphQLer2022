@@ -419,17 +419,17 @@ class FunctionBuilder:
 
 
 
-f = open("shopify_compiled.json", 'r')
+f = open("neogeek_compiled.json", 'r')
 #f = open("compiled_schema2.json", "r")
 objects = json.load(f)
 
 test = FunctionBuilder(objects)
 test1 = test.get_query_mappings()
 test2 = test.get_mutation_mappings()
-test4 = test.get_query_mapping_by_input_datatype("MailingAddress")
-test5 = test.get_query_mapping_by_output_datatype("MailingAddress")
-test6 = test.get_mutation_mapping_by_input_datatype("MailingAddress")
-test7 = test.get_mutation_mapping_by_output_datatype("MailingAddress", True)
+#test4 = test.get_query_mapping_by_input_datatype("MailingAddress")
+#test5 = test.get_query_mapping_by_output_datatype("MailingAddress")
+#test6 = test.get_mutation_mapping_by_input_datatype("MailingAddress")
+#test7 = test.get_mutation_mapping_by_output_datatype("MailingAddress", True)
 ##test5 = test.get_mutation_mapping("checkoutCompleteFree")
 test.print_function_list('function_list.txt')
 test3 = ""

@@ -5,7 +5,7 @@ import os
 # TODO: User input processed introspection Json file.
 
 #SCHEMAPATH = "./introspection/schema.json"
-SCHEMAPATH = "./introspection/shopify_schema.json"
+SCHEMAPATH = "./neogeek_compiled.json"
 
 # TODO: Consider checking Union before making the sequence.
 
@@ -70,7 +70,7 @@ class ObjectSequenceBuilder:
     def build_sequence(self):
         '''
         Start building object sequence.
-        Return object dependency sequence (list) & unsolved objects (queue) 
+        Return two lists: object dependency sequence & unsolved objects
         '''
         while self.object_queue.qsize() > 1:
             ob = self.object_queue.get()
@@ -117,5 +117,5 @@ class ObjectSequenceBuilder:
         f.close()
 
 
-obsb = ObjectSequenceBuilder("./compiled_schema2.json")
+obsb = ObjectSequenceBuilder(SCHEMAPATH)
 object_sequence, unsolved_objects = obsb.build_sequence()

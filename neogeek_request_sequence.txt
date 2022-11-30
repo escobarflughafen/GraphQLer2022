@@ -1,0 +1,8 @@
+createAuthor
+getAuthor
+updateAuthor
+
+getMessage
+updateMessage
+deleteMessage
+deleteAuthor

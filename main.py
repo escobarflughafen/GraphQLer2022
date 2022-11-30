@@ -69,14 +69,6 @@ if __name__ == '__main__':
         
     # testest
     # TODO: User input processed introspection Json file!
-    obsb = ObjectSequenceBuilder("./shopify_compiled.json")
-    object_sequence, unsolved_objects = obsb.build_sequence()
-    print("Final sequence:")
-    for i in object_sequence:
-        print(i)
-
-    print()
-    print("Unsolevd objects:")
 
     # test end
         
