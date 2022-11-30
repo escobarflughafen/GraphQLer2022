@@ -1,6 +1,7 @@
 {
     "version": "0.2.0",
     "configurations": [
+
         
         {
             "name": "Python: Test Shopify Schema",
@@ -21,7 +22,7 @@
             ]
         },
         {
-            "name": "Python: Current File",
+            "name": "Python: Debug",
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/main.py",
@@ -30,12 +31,8 @@
             "args": [
                 "--mode",
                 "debug",
-                /*
-                "-i",
-                "./introspection/schemas/github.json",
-                */
                 "-u",
-                "http://neogeek.io:4000/graphql",
+                "http://neogeek.io:4001/graphql",
             ]
         }
     ],

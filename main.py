@@ -33,7 +33,7 @@ def get_args():
         type=str
     )
 
-    parse.add_argument(
+    parser.add_argument(
         '--wordlist', '-w',
         type=str
     )
@@ -93,8 +93,9 @@ if __name__ == '__main__':
             raise Exception("please add corrent introspection source to arguments by --url or --introspection-json")
 
 
-        selected_query = schema_builder.prepared_schema["queries"]["messages"]
-        selected_query.prepare_payload(schema_builder.schema["inputObjects"], schema_builder.schema["objects"])
+        pprint(schema_builder.prepared_schema)
+        selected_query = schema_builder.prepared_schema["queries"]["getTransactions"]
+        selected_query.prepare_payload(schema_builder.schema)
         print(selected_query.stringify_payload(selected_query.prepared_payload))
         
         pprint(selected_query.prepared_payload)

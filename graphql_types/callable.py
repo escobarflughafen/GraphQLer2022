@@ -15,7 +15,7 @@ class Callable(datatype.Datatype):
         )
 
     
-    def prepare_payload(self, all_input_objects, all_objects):
+    def prepare_payload(self, parsed_graphql_schema):
         '''
         generate a unfulfilled dict for arguments and return fields
         '''
@@ -58,29 +58,39 @@ class Callable(datatype.Datatype):
                     return
 
                 for field in fields:
-                    if fields[field]["type"] == 'OBJECT':
+                    if fields[field]["kind"] == 'OBJECT':
                         child_obj_fields = all_objects[fields[field]["name"]]["fields"]
-                        traverse_fields(prepared_return_fields, child_obj_fields, max_depth-1)
+                        child_obj_query_fields = {}
+                        prepared_return_fields[field] = child_obj_query_fields
+                        traverse_fields(child_obj_query_fields, child_obj_fields, all_objects, max_depth-1)
 
-                    elif fields[field]["type"] == 'LIST':
-                        traverse_fields(prepared_return_fields, fields[field]["ofType"], all_objects, max_depth-1)
+                    elif fields[field]["kind"] == 'LIST':
+                        child_obj = all_objects[fields[field]["ofType"]["name"]]
+                        child_obj_query_fields = {}
+                        prepared_return_fields[field] = child_obj_query_fields
+                        traverse_fields(child_obj_query_fields, child_obj["fields"], all_objects, max_depth-1)
 
-                    elif fields[field]["type"] == 'INTERFACE':
+                    elif fields[field]["kind"] == 'INTERFACE':
                         pass
                     else:
-                        prepare_return_fields[field] = True
+                        prepared_return_fields[field] = True
             
             if return_type["kind"] == 'OBJECT':
                 obj = all_objects[return_type["name"]]
-                fields = obj["field"]
-                traverse_fields(prepared_return_fields, fields, all_objects)
+                fields = obj["fields"]
+                traverse_fields(prepared_return_fields, fields, all_objects, max_depth)
+            elif return_type["kind"] == 'LIST':
+                obj = all_objects[return_type["ofType"]["name"]]
+                
+                fields = obj["fields"]
+                traverse_fields(prepared_return_fields, fields, all_objects, max_depth)
             
             return prepared_return_fields
 
 
         self.prepared_payload = {
-            "args": prepare_args(self.schema["args"], all_input_objects),
-            "fields": prepare_return_fields(self.schema["type"], all_objects)
+            "args": prepare_args(self.schema["args"], parsed_graphql_schema['inputObjects']),
+            "fields": prepare_return_fields(self.schema["type"], parsed_graphql_schema['objects'])
         }
     
     def stringify_payload(self, prepared_payload):
@@ -113,12 +123,16 @@ class Callable(datatype.Datatype):
             arg_str += ')'
             payload_str += arg_str
         
-        def dump_field_str(fields):
-            field_str = "{"
+        def dump_field_str(fields, tabs=1):
+            field_str = "{\n"
             if fields:
                 for field in fields:
-                    field_str += str(field)+'\n'
-            field_str += "}"
+                    if isinstance(fields[field], dict):
+                        if len(fields[field]) > 0:
+                            field_str += '\t'*tabs + str(field) + ' ' + dump_field_str(fields[field], tabs+1) + '\n'
+                    else:
+                        field_str += '\t'*tabs + str(field)+'\n'
+            field_str += '\t'*tabs + "}"
             return field_str
             
         payload_str += dump_field_str(prepared_payload["fields"])
