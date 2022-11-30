@@ -1,7 +1,18 @@
-import os, sys
+import sys, os, random
+from fuzzer import Fuzzer
 
-class WordlistFuzzer:
-    def __init__(self, wordlist_fp):
-        self.words = wordlist_fp.readlines()
+def wordgenerator(wordlist):
+    for word in open(wordlist, 'r'):
+        yield word
+    
+def WordlistFuzzer(Fuzzer):
+
+    def __init__(self):
+        super().__init__()
 
 
+    
+
+
+
+    

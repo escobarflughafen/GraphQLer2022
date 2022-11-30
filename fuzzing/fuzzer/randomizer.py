@@ -1,8 +1,12 @@
-import os, sys, random
+import sys, os, random
+from fuzzer import Fuzzer
 
-class RandomizeFuzzer:
-    
+
+def RandomFuzzer(Fuzzer):
+
     def __init__(self):
+        pass
 
-        self.wordlist = []
+
+
     

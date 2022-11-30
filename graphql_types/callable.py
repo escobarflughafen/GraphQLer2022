@@ -2,6 +2,9 @@ from graphql_types import datatype
 
 
 class Callable(datatype.Datatype):
+    """
+    Abstracting Query and Mutation Type
+    """
 
     def __init__(self, name, schema_json=None, introspection_json=None, sdl=None):
         super().__init__(
@@ -13,7 +16,9 @@ class Callable(datatype.Datatype):
 
     
     def prepare_payload(self, all_input_objects, all_objects):
-
+        '''
+        generate a unfulfilled dict for arguments and return fields
+        '''
         def process_input_object(input_object, all_input_objects):
             processed_input_object = {}
             fields = input_object["fields"]
@@ -42,35 +47,36 @@ class Callable(datatype.Datatype):
             
             return prepared_args
         
-        def process_fields(obj, all_objects):
+        def prepare_return_fields(return_type, all_objects, max_depth = 3):
             '''
-                only return non_null fields
-            '''
-            pass
-            
-
-        def prepare_return_fields(return_type, all_objects):
-            '''
-                only return ID 
+                return all fields of return object
             '''
             prepared_return_fields = {}
 
-            # TODO: expand object body || extract ID from inner objects
-            if return_type["kind"] == "OBJECT":
-                obj = all_objects[return_type["name"]]
-                fields = obj["fields"]
+            def traverse_fields(prepared_return_fields, fields, all_objects, max_depth):
+                if max_depth == 0:
+                    return
+
                 for field in fields:
-                    if fields[field]["kind"] == "SCALAR" and fields[field]["name"] == "ID":
-                        prepared_return_fields[field] = True
-            elif return_type["kind"] == "LIST":
-                return prepare_return_fields(return_type["ofType"], all_objects)
-                        
-            elif return_type["kind"] == "INTERFACE":
-                prepared_return_fields = None
-            else:
-                prepared_return_fields   = None
-                
+                    if fields[field]["type"] == 'OBJECT':
+                        child_obj_fields = all_objects[fields[field]["name"]]["fields"]
+                        traverse_fields(prepared_return_fields, child_obj_fields, max_depth-1)
+
+                    elif fields[field]["type"] == 'LIST':
+                        traverse_fields(prepared_return_fields, fields[field]["ofType"], all_objects, max_depth-1)
+
+                    elif fields[field]["type"] == 'INTERFACE':
+                        pass
+                    else:
+                        prepare_return_fields[field] = True
+            
+            if return_type["kind"] == 'OBJECT':
+                obj = all_objects[return_type["name"]]
+                fields = obj["field"]
+                traverse_fields(prepared_return_fields, fields, all_objects)
+            
             return prepared_return_fields
+
 
         self.prepared_payload = {
             "args": prepare_args(self.schema["args"], all_input_objects),
@@ -84,7 +90,6 @@ class Callable(datatype.Datatype):
 
         payload_str = ""
         payload_str += self.name
-
 
         arg_str = '('
         def dump_args(args):
@@ -116,14 +121,8 @@ class Callable(datatype.Datatype):
             field_str += "}"
             return field_str
             
-            
-
         payload_str += dump_field_str(prepared_payload["fields"])
 
         return payload_str
                     
-                    
 
-
-
-        

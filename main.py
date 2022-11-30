@@ -33,6 +33,11 @@ def get_args():
         type=str
     )
 
+    parse.add_argument(
+        '--wordlist', '-w',
+        type=str
+    )
+
     parser.add_argument(
         '--introspection-json', '-i',
         type=str
@@ -42,6 +47,7 @@ def get_args():
         '--save', '-o',
         type=str
     )
+
 
     return parser
 
@@ -69,9 +75,13 @@ if __name__ == '__main__':
             schema_builder.dump(path=args.save)
         else:
             schema_builder.dump()
+    
+    elif args.mode == 'fuzz':
+        url = args.url
         
         
-    if args.mode == 'debug':
+        
+    elif args.mode == 'debug':
         url = args.url
         introspection_json_path = args.introspection_json
         if url:

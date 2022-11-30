@@ -23,13 +23,10 @@ class Request:
         body += '\n}'
         
         return body
-    
 
     def request(self):
-        request_body = self.get_request_body()    
-
+        request_body = self.get_request_body()
         return connect.send_request(self.url, request_body)
         
     def add_payload(self, req_payload):
         self.sequence.append(req_payload)
-
