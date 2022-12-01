@@ -3,10 +3,10 @@ import os
 import sys
 
 
-
 class Cache:
     def __init__(self, schema):
         self.schema = schema
+        
         self.cache = {
             "id": {
                 objname: [] for objname in schema["objects"]
@@ -81,3 +81,6 @@ class Cache:
             "value": value,
             "status": "new"
         })
+        
+    
+    
