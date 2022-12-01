@@ -1,44 +1,116 @@
-createAuthor:
+createCurrency:
   input:
-    input: null
+    abbreviation: null
+    country: null
+    symbol: null
   output:
     kind: OBJECT
-    name: Author
+    name: Currency
     ofType: null
-createMessage:
+createLocation:
   input:
-    input: Author
+    lat: null
+    lng: null
+    name: null
   output:
     kind: OBJECT
-    name: Message
+    name: Location
     ofType: null
-deleteAuthor:
+createTransaction:
   input:
-    id: Author
+    amount: null
+    currencyID: null
+    payerID: null
+    walletID: null
   output:
     kind: OBJECT
-    name: Author
+    name: Transaction
     ofType: null
-deleteMessage:
+createUser:
   input:
-    id: Message
+    description: null
+    firstName: null
+    lastName: null
   output:
     kind: OBJECT
-    name: Message
+    name: User
     ofType: null
-updateAuthor:
+createWallet:
   input:
-    id: Author
-    input: null
+    currencyID: null
+    name: null
+    userID: null
   output:
     kind: OBJECT
-    name: Author
+    name: Wallet
     ofType: null
-updateMessage:
+deleteCurrency:
   input:
-    id: Message
-    input: Message
+    currencyID: Currency
   output:
     kind: OBJECT
-    name: Message
+    name: Currency
+    ofType: null
+deleteLocation:
+  input:
+    locationID: Location
+  output:
+    kind: OBJECT
+    name: Location
+    ofType: null
+deleteTransaction:
+  input:
+    transactionID: Transaction
+  output:
+    kind: OBJECT
+    name: Transaction
+    ofType: null
+deleteUser:
+  input:
+    userID: User
+  output:
+    kind: OBJECT
+    name: User
+    ofType: null
+deleteWallet:
+  input:
+    walletID: Wallet
+  output:
+    kind: OBJECT
+    name: Wallet
+    ofType: null
+updateCurrency:
+  input:
+    currencyID: Currency
+  output:
+    kind: OBJECT
+    name: Currency
+    ofType: null
+updateLocation:
+  input:
+    locationID: Location
+  output:
+    kind: OBJECT
+    name: Location
+    ofType: null
+updateTransaction:
+  input:
+    transactionID: Transaction
+  output:
+    kind: OBJECT
+    name: Transaction
+    ofType: null
+updateUser:
+  input:
+    userID: User
+  output:
+    kind: OBJECT
+    name: User
+    ofType: null
+updateWallet:
+  input:
+    walletID: Wallet
+  output:
+    kind: OBJECT
+    name: Wallet
     ofType: null
