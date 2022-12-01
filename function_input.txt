@@ -1,22 +1,62 @@
-authors:
-  input: null
+getCurrencies:
+  input: {}
   output:
     kind: OBJECT
-    name: Author
-getAuthor:
+    name: Currency
+getCurrency:
   input:
-    id: Author
+    currencyID: Currency
   output:
     kind: OBJECT
-    name: Author
-getMessage:
+    name: Currency
+getCurrentRate:
   input:
-    id: Message
+    foreignCurrencySymbol: null
+    mainCurrencySymbol: null
+  output:
+    kind: SCALAR
+    name: Float
+getLocation:
+  input:
+    locationID: Location
   output:
     kind: OBJECT
-    name: Message
-messages:
-  input: null
+    name: Location
+getLocations:
+  input: {}
   output:
     kind: OBJECT
-    name: Message
+    name: Location
+getTransaction:
+  input:
+    transactionID: Transaction
+  output:
+    kind: OBJECT
+    name: Transaction
+getTransactions:
+  input: {}
+  output:
+    kind: OBJECT
+    name: Transaction
+getUser:
+  input:
+    userID: User
+  output:
+    kind: OBJECT
+    name: User
+getUsers:
+  input: {}
+  output:
+    kind: OBJECT
+    name: User
+getWallet:
+  input:
+    walletID: Wallet
+  output:
+    kind: OBJECT
+    name: Wallet
+getWallets:
+  input: {}
+  output:
+    kind: OBJECT
+    name: Wallet

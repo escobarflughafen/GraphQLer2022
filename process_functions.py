@@ -474,11 +474,12 @@ class FunctionBuilder:
 
 
 
-#f = open("shopify_compiled.json", 'r')
-f = open("neo_scheme.json", "r")
+'''#f = open("shopify_compiled.json", 'r')
+f = open("schema_wallet.json", "r")
 objects = json.load(f)
 
-test = FunctionBuilder(objects, query_parameter_file_path="function_input.txt", mutation_parameter_file_path="function_mutation_input.txt")
+test = FunctionBuilder(objects)
+#test = FunctionBuilder(objects, query_parameter_file_path="function_input.txt", mutation_parameter_file_path="function_mutation_input.txt")
 test1 = test.get_query_mappings()
 test2 = test.get_mutation_mappings()
 
@@ -488,9 +489,9 @@ test6 = test.get_mutation_mapping_by_input_datatype("Message")
 test7 = test.get_mutation_mapping_by_output_datatype("Message")
 ##test5 = test.get_mutation_mapping("checkoutCompleteFree")
 test.print_function_list('function_list.txt')
-#test.print_query_parameter_list('function_input.txt')
-test.read_query_parameter_list('function_input.txt')
-#test.print_mutation_parameter_list('function_mutation_input.txt')
-test.read_mutation_parameter_list('function_mutation_input.txt')
-test3 = ""
+test.print_query_parameter_list('function_input.txt')
+#test.read_query_parameter_list('function_input.txt')
+test.print_mutation_parameter_list('function_mutation_input.txt')
+#test.read_mutation_parameter_list('function_mutation_input.txt')
+test3 = ""'''
 
