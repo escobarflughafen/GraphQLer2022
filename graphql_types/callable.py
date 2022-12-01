@@ -1,11 +1,9 @@
 from graphql_types import datatype
 
-
 class Callable(datatype.Datatype):
     """
     Abstracting Query and Mutation Type
     """
-
     def __init__(self, name, schema_json=None, introspection_json=None, sdl=None):
         super().__init__(
             name,
@@ -19,6 +17,7 @@ class Callable(datatype.Datatype):
         '''
         generate a unfulfilled dict for arguments and return fields
         '''
+
         def process_input_object(input_object, all_input_objects):
             processed_input_object = {}
             fields = input_object["fields"]
@@ -101,8 +100,8 @@ class Callable(datatype.Datatype):
         payload_str = ""
         payload_str += self.name
 
-        arg_str = '('
-        def dump_args(args):
+        def dump_args(args, ):
+            arg_str = ''
             if args: 
                 for arg in args:
                     arg_str += arg + ': '
@@ -117,11 +116,14 @@ class Callable(datatype.Datatype):
                             arg_str += '"'
                         else:
                             arg_str += str(args[arg])
-                
+                    
+                    arg_str += ', '
+            return arg_str
+
         if prepared_payload["args"]:
-            dump_args(prepared_payload["args"]) 
-            arg_str += ')'
-            payload_str += arg_str
+            payload_str += '('
+            payload_str += dump_args(prepared_payload["args"])
+            payload_str += ')'
         
         def dump_field_str(fields, tabs=1):
             field_str = "{\n"

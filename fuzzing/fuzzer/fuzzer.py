@@ -1,17 +1,16 @@
 import sys, os, random
+from fuzzing import cache
 
 STATIC_TYPES = [{'kind'}]
 DYNAMIC_TYPES = [{'kind': 'SCALAR', 'name': 'ID'}, {'kind': 'INPUT_OBJECT'}]
 
 
+def get_type(arg, schema):
+    return ''
+
 class Fuzzer:
-    
-    def __init__(self, schema, fuzzables, static_types, dynamic_types, cache, max_depth):
-        self.fuzzables = fuzzables
-        self.static_types = static_types
-        self.dynamic_types = dynamic_types
+    def __init__(self, schema, cache: cache.Cache):
         self.cache = cache
-        self.max_depth = max_depth
         self.schema = schema
     
     def set_max_depth(self, n):
@@ -19,22 +18,21 @@ class Fuzzer:
             raise "set n greater than 0" 
         self.max_depth = n
     
-    def handle_static_arg(self, arg):
-        '''
-            override this method in implementations
-        '''
+    def resolve_int(self, arg):
+        raise "no default handling for int argument is defined"
+    
+    def resolve_float(self, arg):
+        raise "no default handling for float argument is defined"
 
-        raise "no default handling for static argument is defined"
+    def resolve_string(self, arg):
+        raise "no default handling for string argument is defined"
 
-    def handle_dynamic_arg(self, arg):
-        return self.cache.get_random_object(arg["object_type"])
+    def resolve_enum(self, arg):
+        raise "no default handling for enum argument is defined"
 
-    def concretize_payload(self, args):
-        for argname, value in args.items():
-            if isinstance(value, dict):
-                self.concretize_payload(value)
-            else:
-                if value["type"] == "SCALAR" and ("id" in argname.lower()):
-                    self.handle_dynamic_arg(value)
-                else:
-                    self.handle_static_arg(value)
+
+    def resolve_id(self, arg):
+        # TODO: resolve dynamic object
+        of_type = get_type(arg, self.schema)
+        dynamic_id = self.cache.get_random_id_by_type(of_type)
+        return dynamic_id        

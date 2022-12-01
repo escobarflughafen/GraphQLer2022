@@ -8,15 +8,25 @@ class Requestor:
     def __init__(self, req_seq, cache, fuzzer, url):
         self.req_seq = req_seq
         self.cache = cache
-        self.current_request = req_seq[0]
         self.fuzzer = fuzzer
         self.url = url
 
-    def concretize(self):
-        current_request = self.current_request
-        prepared_payload = self.fuzzer.concretize_payload(current_request.prepare_payload())
+
+    def execute(self, prepared_schema):
+        for reqname in self.req_seq:
+            callable_instance = prepared_schema[]
+            request = Request(self.url, )
         
 
+            # TODO: make request 
+
+
+            # TODO: store in cache
+            
+
+            # TODO: error handling
+
+    '''
     def execute(self, schema):
         for reqname in self.req_seq:
             if reqname in schema["queries"]:
@@ -28,3 +38,4 @@ class Requestor:
             req = Request(self.url, mode, )
             
         return 
+    '''

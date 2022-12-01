@@ -6,7 +6,6 @@ import json
 from request import request
 from pprint import pprint
 from fuzzing import orchestrator
-import logging
 
 def get_args():
     parser = argparse.ArgumentParser(
