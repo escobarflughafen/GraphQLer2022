@@ -75,9 +75,9 @@ class Cache:
 
         return cached_input_object
 
-    def save(self, object_type, object_name, value):
+    def save(self, cache_type, object_name, value):
 
-        self.cache[object_type][object_name].append({
+        self.cache[cache_type][object_name].append({
             "value": value,
             "status": "new"
         })
