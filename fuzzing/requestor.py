@@ -14,46 +14,48 @@ def traverse_response(response, callback, schema):
         response_data = response["data"]
         for function_name in response_data:
             if function_name in schema["queries"]:
-                traverse_query(function_name, response_data[function_name], callback, schema, cache)
+                traverse_query(function_name, response_data[function_name], callback, schema)
             elif function_name in schema["mutations"]:
-                traverse_mutation(function_name, response_data[function_name], callback, schema, cache)
+                traverse_mutation(function_name, response_data[function_name], callback, schema)
     except Exception:
         pass
 
 def traverse_query(query_name, data, callback, schema):
-    mutation_schema = schema["queries"][query_name]
-    return_type = mutation_schema["type"]
+    query_schema = schema["queries"][query_name]
+    return_type = query_schema["type"]
     if return_type["kind"] == "OBJECT":
         oftype = return_type["name"]
-        traverse_object(oftype, data["mutation_name"], callback, schema)
+        traverse_object(oftype, data[query_name], callback, schema)
     elif return_type["kind"] == "LIST":
         oftype = return_type["ofType"]["name"]
-        traverse_list(oftype, data["mutation_name"], callback, schema)
+        traverse_list(oftype, data, callback, schema)
     
 def traverse_mutation(mutation_name, data, callback, schema):
     mutation_schema = schema["mutations"][mutation_name]
     return_type = mutation_schema["type"]
     if return_type["kind"] == "OBJECT":
         oftype = return_type["name"]
-        traverse_object(oftype, data["mutation_name"], callback, schema)
+        traverse_object(oftype, data, callback, schema)
     elif return_type["kind"] == "LIST":
         oftype = return_type["ofType"]["name"]
-        traverse_list(oftype, data["mutation_name"], callback, schema)
+        traverse_list(oftype, data[mutation_name], callback, schema)
 
 def traverse_list(oftype, data, callback, schema):
+    print(oftype)
     for item in data:
         traverse_object(oftype, item, callback, schema) 
-    
 
 object_types = ['OBJECT', 'INTERFACE']
 
 def traverse_object(oftype, data, callback, schema):
     #handle IDs
-    if len(oftype) == 2:
-        callback('id', oftype, data)
+    '''
+    if isinstance(oftype, list) and len(oftype) == 2:
+        if oftype[0] == id:
+            callback('id', oftype, data)
         return
-
-    if oftype in object_types:
+    '''
+    if oftype in schema["objects"]:
         #cache.save("objects", oftype, data)
         callback('objects', oftype, data)
 
@@ -65,9 +67,9 @@ def traverse_object(oftype, data, callback, schema):
         field_typename = field_define["name"]
         if field_kind == "SCALAR":
             if field_typename == 'ID':
-                callback(['id', field], oftype, data[field])
+                callback('id', oftype, data[field])
             else:
-                callback('scalars', oftype, [field, data[field]])
+                callback(field_typename, oftype, [field, data[field]])
 
         elif field_kind == 'LIST':
             _oftype = field_define["ofType"]["name"]
@@ -84,6 +86,7 @@ class Requestor:
         self.cache = cache
         self.fuzzer = fuzzer
         self.url = url
+        self.current_id_oftype = ''
 
     def concretize_args(self, args, graphql_schema):
         for arg in args:
@@ -108,7 +111,7 @@ class Requestor:
                 elif arg[1] == 'Enum':
                     arg[0] = self.fuzzer.resolve_enum(arg)
                 elif arg[1] == 'ID':
-                    arg[0] = 'TESTIDTESTIDTESTID'
+                    arg[0] = self.fuzzer.resolve_id(self.current_id_oftype)
                     #arg[0] = self.fuzzer.resolve_id(arg)
 
                 else:
@@ -131,20 +134,28 @@ class Requestor:
             func_instance.prepare_payload(schema)
 
             prepared_args = func_instance.prepared_payload["args"]
+            return_kind = func_schema["type"]["kind"]
+            if return_kind == 'LIST':
+                self.current_id_oftype = func_schema["type"]["ofType"]["name"]
+            else:
+                self.current_id_oftype = func_schema["type"]["name"]
+
             self.concretize_args(prepared_args, schema)
 
             # TODO: make request
             req_instance = Request(self.url, MODE)
-            print(func_instance.stringify_payload())
             req_instance.add_payload(func_instance.stringify_payload())
 
-            # print(req_instance.get_request_body())
-
             response = req_instance.request()
+            print(func, '\n', response)
 
             # TODO: store in cache
             # assigned
-            print(response)
+            def save_in_cache(cache_type, object_name, value):
+                self.cache.save(cache_type, object_name, value)
+                
+            traverse_response(response, save_in_cache, schema)
+            
 
             # TODO: error handling
 

@@ -28,7 +28,8 @@ class Cache:
         '''
         id_cache = self.cache["id"][object_name]
 
-        cached_object = id_cache[random.randint(0, len(id_cache)-1)]
+        index = random.randint(0, len(id_cache))
+        cached_object = id_cache[random.randint(0, len(id_cache))]
 
         if non_used_only:
             attempt_counter = 1
