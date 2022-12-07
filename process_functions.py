@@ -5,42 +5,42 @@ import yaml
 
 class FunctionBuilder:
 
-    def __init__(self, schema_json, function_list_file_path = None, query_datatype_file_path = None, mutation_datatype_file_path = None, query_parameter_file_path = None, mutation_parameter_file_path = None):
+    # during the first call, usually we only provide schema json file and there will be 3 files generated for user to fix
+    # next call we will load original schema with 3 modified files and the datatype will be overwrited during the initialication
+    def __init__(self, schema_json_file_path, function_list_file_path = None, query_parameter_file_path = None, mutation_parameter_file_path = None):
+        f = open(schema_json_file_path, "r")
+        schema_json = json.load(f)
+        f.close()
         self.schema_json = schema_json
         self.objects = schema_json["objects"]
-        self.input_objects = schema_json["inputObjects"]
-        if schema_json.get("queries") != None and query_datatype_file_path == None:
+
+        # if there are no input type, we won't load input object list
+        if schema_json.get("inputObjects") != None:
+            self.input_objects = schema_json["inputObjects"]
+
+        # if there are no queries, we will not proceed to build query list
+        if schema_json.get("queries") != None:
             self.queries = schema_json["queries"]
             self.query_datatype_mappings = self.link_functions_with_datatype("queries")
-        elif query_datatype_file_path != None:
-            f = open(query_datatype_file_path, 'r')
-            self.query_datatype_mappings = json.load(f)
-            f.close()
-        if schema_json.get("mutations") != None and mutation_datatype_file_path == None:
+        
+        # if there are no motations, we will not proceed to build mutation list
+        if schema_json.get("mutations") != None:
             self.mutations = schema_json["mutations"]
             self.mutation_datatype_mappings = self.link_functions_with_datatype("mutations")
             self._check_function_type()
-        elif mutation_datatype_file_path != None:
-            f = open(mutation_datatype_file_path, 'r')
-            self.mutation_datatype_mappings = json.load(f)
-            f.close()
+        
+        # if the function list file is provided, we will use the user input to overwrite the original result
         if function_list_file_path != None:
-            f = open(function_list_file_path, 'r')
-            data = f.readlines()
-            self.update_function_list(data)
-            f.close()
+            self.update_function_type(function_list_file_path)
+
+        # if the query parameter datatype list file is provided, we will use the user input to overwrite the original result
         if query_parameter_file_path != None:
             self.read_query_parameter_list(query_parameter_file_path)
+
+        # if the mutation parameter datatype list file is provided, we will use the user input to overwrite the original result
         if mutation_parameter_file_path != None:
             self.read_mutation_parameter_list(mutation_parameter_file_path)
 
-
-    def update_function_list(self, newList):
-        for line in newList:
-            if line != "\n":
-                args = line.split('\t')
-                self.mutation_datatype_mappings[args[0]]['functionType'] = args[1].strip()
-        return
 
     # given current datatype and all previously processed datatype list, this function
     # is to return all functions with at least 1 input parameters associated with 
@@ -199,8 +199,10 @@ class FunctionBuilder:
 
     def print_function_list(self, path):
         f = open(path, 'w')
+        output_json = {}
         for function_name, function_body in self.mutation_datatype_mappings.items():
-            f.writelines(function_name + "\t" + function_body["functionType"] + "\n")
+            output_json[function_name] = function_body["functionType"]
+        f.write(yaml.dump(output_json))
         f.close()
         return
 
@@ -236,6 +238,21 @@ class FunctionBuilder:
         f.close()
         return
 
+    def generate_grammer_file(self):
+        if self.schema_json.get("queries") != None:
+            self.print_query_parameter_list("query_parameter_list.yml")
+        if self.schema_json.get("mutations") != None:
+            self.print_function_list("mutation_function_list.yml")
+            self.print_mutation_parameter_list("mutation_parameter_list.yml")
+
+    # update function type based on user modified yaml file
+    def update_function_type(self, path):
+        f = open(path, 'r')
+        input_json = yaml.load(f.read())
+        for function_name, function_type in input_json.items():
+                self.mutation_datatype_mappings[function_name]['functionType'] = function_type
+        return
+
     def read_query_parameter_list(self, path):
         f = open(path, 'r')
         input_json = yaml.load(f.read())
@@ -254,18 +271,24 @@ class FunctionBuilder:
         f.close()
         return
 
-    def print_mutation_datatype_list(self, path):
-        f = open(path, 'w')
-        json.dump(self.mutation_datatype_mappings, f)
-        f.close()
-        return
+    def build_function_call_schema(self, function_type, function_name):
+        output_json = {}
+        if function_type == "query":
+            output_json[function_name] = self.query_datatype_mappings[function_name]["rawdata"]
+            output_json[function_name]["type"]["ofDatatype"] = self.query_datatype_mappings[function_name]["outputDatatype"]["name"]
+            for arg_name, arg_body in self.query_datatype_mappings[function_name]["rawdata"]["args"].items():
+                output_json[function_name]["args"][arg_name]["ofDatatype"] = self.query_datatype_mappings[function_name]["inputDatatype"][arg_name]
+        elif function_type == "mutation":
+            output_json[function_name] = self.mutation_datatype_mappings[function_name]["rawdata"]
+            output_json[function_name]["type"]["ofDatatype"] = self.mutation_datatype_mappings[function_name]["outputDatatype"]["name"]
+            for arg_name, arg_body in self.mutation_datatype_mappings[function_name]["rawdata"]["args"].items():
+                output_json[function_name]["args"][arg_name]["ofDatatype"] = self.mutation_datatype_mappings[function_name]["inputDatatype"][arg_name]
+        return output_json
 
-    def print_query_datatype_list(self, path):
-        f = open(path, 'w')
-        json.dump(self.query_datatype_mappings, f)
-        f.close()
-        return
+        
 
+
+    # Estimate possible operation types by checking for key words in the function name
     def _check_function_type(self):
         function_objects = self.schema_json["mutations"]
 
@@ -474,12 +497,16 @@ class FunctionBuilder:
 
 
 
-'''#f = open("shopify_compiled.json", 'r')
-f = open("schema_wallet.json", "r")
-objects = json.load(f)
+#f = open("shopify_compiled.json", 'r')
 
-test = FunctionBuilder(objects)
-#test = FunctionBuilder(objects, query_parameter_file_path="function_input.txt", mutation_parameter_file_path="function_mutation_input.txt")
+test = FunctionBuilder("schema_wallet.json")
+test.generate_grammer_file()
+
+
+
+
+
+test = FunctionBuilder("schema_wallet.json", query_parameter_file_path="function_input.txt", mutation_parameter_file_path="function_mutation_input.txt")
 test1 = test.get_query_mappings()
 test2 = test.get_mutation_mappings()
 
@@ -489,9 +516,10 @@ test6 = test.get_mutation_mapping_by_input_datatype("Message")
 test7 = test.get_mutation_mapping_by_output_datatype("Message")
 ##test5 = test.get_mutation_mapping("checkoutCompleteFree")
 test.print_function_list('function_list.txt')
+test8 = test.build_function_call_schema("mutation", "createUser")
 test.print_query_parameter_list('function_input.txt')
 #test.read_query_parameter_list('function_input.txt')
 test.print_mutation_parameter_list('function_mutation_input.txt')
 #test.read_mutation_parameter_list('function_mutation_input.txt')
-test3 = ""'''
+test3 = ""
 
