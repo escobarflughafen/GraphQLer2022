@@ -115,7 +115,7 @@ function createWallet(name, currencyID, userID) {
     return wallet;
 }
 
-function createTransaction(amount, payerID, walletID, currencyID) {
+function createTransaction(amount, payerID, walletID, currencyID, description) {
     const transaction = {
         id: uuid(),
         amount: amount,
@@ -123,7 +123,7 @@ function createTransaction(amount, payerID, walletID, currencyID) {
         payer: payerID,
         description: description,
         location: createLocation(),
-        timestamp: Date.now(),
+        timestamp: Date.now().toString(),
         walletID: walletID
     };
 
@@ -322,8 +322,8 @@ const resolvers = {
             return createUser(firstName, lastName, description);
         },
 
-        createTransaction: (root, { amount, payerID, walletID, currencyID }) => {
-            return createTransaction(amount, payerID, walletID, currencyID);
+        createTransaction: (root, { amount, payerID, walletID, currencyID, description }) => {
+            return createTransaction(amount, payerID, walletID, currencyID, description);
         },
         createLocation: (root, { lat, lng, name }) => {
             return createLocation(lat, lng, name);
@@ -413,6 +413,9 @@ const resolvers = {
         },
         location: (root) => {
             return getLocation(root.location);
+        },
+        wallet: (root) => {
+            return getWallet(root.walletID);
         }
     },
     Currency: {
