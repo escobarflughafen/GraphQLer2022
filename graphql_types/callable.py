@@ -6,19 +6,17 @@ class Callable(datatype.Datatype):
     Abstracting Query and Mutation Type
     """
 
-    def __init__(self, name, schema_json=None, introspection_json=None, sdl=None):
+    def __init__(self, name, schema_json=None, args_schema=None):
         super().__init__(
             name,
             schema_json=schema_json,
-            introspection_json=introspection_json,
-            sdl=sdl
         )
+        self.args_schema = args_schema
 
-    def prepare_payload(self, parsed_graphql_schema, function_builder, function_type="query"):
+    def prepare_payload(self, gql_server_schema):
         '''
         generate a unfulfilled dict for arguments and return fields
         '''
-        args_schema = function_builder.build_function_call_schema(function_type, self.name)
         
         def process_input_object(input_object, all_input_objects):
             processed_input_object = {}
@@ -47,7 +45,7 @@ class Callable(datatype.Datatype):
                     prepared_args[arg]=[[None, args[arg]["name"]]]
                 elif args[arg]["name"] == 'ID':
                     
-                    prepared_args[arg] = [None, 'ID', args[arg]["ofObject"]]
+                    prepared_args[arg] = [None, 'ID', args[arg]["ofDatatype"]]
                 else:
                     prepared_args[arg]=[None, args[arg]["name"]]
 
@@ -100,8 +98,8 @@ class Callable(datatype.Datatype):
             return prepared_return_fields
 
         self.prepared_payload = {
-            "args": prepare_args(self.schema["args"], parsed_graphql_schema['inputObjects']),
-            "fields": prepare_return_fields(self.schema["type"], parsed_graphql_schema['objects'])
+            "args": prepare_args(self.args_schema[self.name]["args"], gql_server_schema['inputObjects']),
+            "fields": prepare_return_fields(self.schema["type"], gql_server_schema['objects'])
         }
 
     def stringify_payload(self):
@@ -113,7 +111,7 @@ class Callable(datatype.Datatype):
         payload_str += self.name
 
         def dump_args(args, ):
-            print(args)
+            #print(args)
             arg_str = ''
             if args:
                 for arg in args:

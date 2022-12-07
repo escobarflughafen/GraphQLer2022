@@ -1,0 +1,129 @@
+createCurrency:
+  input:
+    abbreviation: null
+    country: null
+    symbol: null
+  output:
+    kind: OBJECT
+    name: Currency
+    ofType: null
+createLocation:
+  input:
+    lat: null
+    lng: null
+    name: null
+  output:
+    kind: OBJECT
+    name: Location
+    ofType: null
+createTransaction:
+  input:
+    amount: null
+    currencyID: Currency
+    payerID: User
+    walletID: Wallet
+  output:
+    kind: OBJECT
+    name: Transaction
+    ofType: null
+createUser:
+  input:
+    description: null
+    firstName: null
+    lastName: null
+  output:
+    kind: OBJECT
+    name: User
+    ofType: null
+createWallet:
+  input:
+    currencyID: Currency
+    name: null
+    userID: User
+  output:
+    kind: OBJECT
+    name: Wallet
+    ofType: null
+deleteCurrency:
+  input:
+    currencyID: Currency
+  output:
+    kind: OBJECT
+    name: Currency
+    ofType: null
+deleteLocation:
+  input:
+    locationID: Location
+  output:
+    kind: OBJECT
+    name: Location
+    ofType: null
+deleteTransaction:
+  input:
+    transactionID: Transaction
+  output:
+    kind: OBJECT
+    name: Transaction
+    ofType: null
+deleteUser:
+  input:
+    userID: User
+  output:
+    kind: OBJECT
+    name: User
+    ofType: null
+deleteWallet:
+  input:
+    walletID: Wallet
+  output:
+    kind: OBJECT
+    name: Wallet
+    ofType: null
+updateCurrency:
+  input:
+    abbreviation: null
+    country: null
+    currencyID: Currency
+    symbol: null
+  output:
+    kind: OBJECT
+    name: Currency
+    ofType: null
+updateLocation:
+  input:
+    lat: null
+    lng: null
+    locationID: Location
+    name: null
+  output:
+    kind: OBJECT
+    name: Location
+    ofType: null
+updateTransaction:
+  input:
+    amount: null
+    description: null
+    payer: User
+    transactionID: Transaction
+  output:
+    kind: OBJECT
+    name: Transaction
+    ofType: null
+updateUser:
+  input:
+    description: null
+    firstName: null
+    lastName: null
+    userID: User
+  output:
+    kind: OBJECT
+    name: User
+    ofType: null
+updateWallet:
+  input:
+    name: null
+    walletID: Wallet
+  output:
+    kind: OBJECT
+    name: Wallet
+    ofType: null

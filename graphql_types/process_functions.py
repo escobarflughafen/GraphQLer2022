@@ -280,6 +280,7 @@ class FunctionBuilder:
                 output_json[function_name]["args"][arg_name]["ofDatatype"] = self.query_datatype_mappings[function_name]["inputDatatype"][arg_name]
         elif function_type == "mutation":
             output_json[function_name] = self.mutation_datatype_mappings[function_name]["rawdata"]
+            output_json[function_name]["functionType"] = self.mutation_datatype_mappings[function_name]["functionType"]
             output_json[function_name]["type"]["ofDatatype"] = self.mutation_datatype_mappings[function_name]["outputDatatype"]["name"]
             for arg_name, arg_body in self.mutation_datatype_mappings[function_name]["rawdata"]["args"].items():
                 output_json[function_name]["args"][arg_name]["ofDatatype"] = self.mutation_datatype_mappings[function_name]["inputDatatype"][arg_name]
