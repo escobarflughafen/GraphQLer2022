@@ -1,5 +1,5 @@
 import argparse
-from os import error
+import os
 import introspection.parse as parse
 import json
 from request import request
@@ -8,6 +8,7 @@ from fuzzing.requestor import Requestor
 from fuzzing.cache import Cache
 from fuzzing.fuzzer.constant import ConstantFuzzer
 import yaml
+from fuzzing.process_functions import FunctionBuilder
 
 
 def get_args():
@@ -55,14 +56,14 @@ def get_args():
         type=str
     )
 
-    #parser.add_argument(
-        #'--wordlist-dir', '-w',
-        #type=str
-    #)
+    # parser.add_argument(
+    #'--wordlist-dir', '-w',
+    # type=str
+    # )
 
-    #parser.add_argument(
+    # parser.add_argument(
 
-    #)
+    # )
 
     return parser
 
@@ -92,12 +93,14 @@ if __name__ == '__main__':
             schema_builder.dump(path=args.save)
         else:
             schema_builder.dump()
-        
-        # TODO: output config files
+
+        function_builder = FunctionBuilder(args.save)
+
+        function_builder.generate_grammer_file()
 
     elif args.mode == 'fuzz':
         url = args.url
-    
+
     elif args.mode == 'debug':
         url = args.url
         introspection_json_path = args.introspection_json
@@ -131,8 +134,13 @@ if __name__ == '__main__':
         introspection_json_path = args.introspection_json
         parsed_schema_path = args.schema
 
+        schema_file_name = 'schema.json'
+        function_list_file_name = 'function_list.txt'
+        query_parameter_file_name = 'query_parameter.txt'
+        mutation_parameter_file_name = 'mutation_parameter.txt'
+
         if parsed_schema_path:
-            with open(parsed_schema_path) as f:
+            with open(os.path.join(parsed_schema_path, schema_file_name)) as f:
                 schema = json.load(f)
         elif url:
             schema_builder = parse.SchemaBuilder(url=url)
@@ -143,7 +151,12 @@ if __name__ == '__main__':
         else:
             raise Exception(
                 "please add corrent introspection source to arguments by --url or --introspection-json")
-        
+
+        function_builder = FunctionBuilder(
+            os.path.join(parsed_schema_path, schema_file_name),
+            query_parameter_file_path=os.path.join(parsed_schema_path, query_parameter_file_name),
+            mutation_parameter_file_path=os.path.join(parsed_schema_path, mutation_parameter_file_name)
+        )
 
         req_seq = [
             'createUser',
@@ -169,16 +182,13 @@ if __name__ == '__main__':
             'deleteUser',
         ]
 
-        
-
         cache = Cache(schema)
+        function_builder = FunctionBuilder(parsed_schema_path, )
         requestor = Requestor(req_seq,
                               cache,
                               ConstantFuzzer(schema, cache),
                               url,
                               schema,
-                              )
+                        )
 
         requestor.execute(schema)
-
-        

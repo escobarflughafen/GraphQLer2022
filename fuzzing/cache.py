@@ -6,7 +6,7 @@ import sys
 class Cache:
     def __init__(self, schema):
         self.schema = schema
-        
+
         self.cache = {
             "id": {
                 objname: [] for objname in schema["objects"]
@@ -28,8 +28,12 @@ class Cache:
         '''
         id_cache = self.cache["id"][object_name]
 
-        index = random.randint(0, len(id_cache))
-        cached_object = id_cache[random.randint(0, 0 if len(id_cache)==0 else len(id_cache)-1)]
+        if len(id_cache) == 0:
+            return None
+
+        index = random.randint(0, max(len(id_cache)-1, 0))
+
+        cached_object = id_cache[index]
 
         if non_used_only:
             attempt_counter = 1
@@ -76,12 +80,16 @@ class Cache:
 
         return cached_input_object
 
-    def save(self, cache_type, object_name, value):
-
-        self.cache[cache_type][object_name].append({
-            "value": value,
-            "status": "new"
-        })
-        
-    
-    
+    def save(self, cache_type, object_name, value, id=None):
+        #if unique:
+            #self.cache['unique_objects'][object_name][value] = data
+        if id:
+            self.cache['unique_objects'][object_name][id] = {
+                "values": value,
+                "status": "new"
+            }
+        else:
+            self.cache[cache_type][object_name].append({
+                "value": value,
+                "status": "new"
+            })

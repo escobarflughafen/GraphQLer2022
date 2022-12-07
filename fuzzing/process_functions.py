@@ -496,25 +496,26 @@ class FunctionBuilder:
 
 
 
-#f = open("shopify_compiled.json", 'r')
+if __name__ == '__main__':
+    #f = open("shopify_compiled.json", 'r')
 
-test = FunctionBuilder("schema_wallet.json")
-test.generate_grammer_file()
+    test = FunctionBuilder("schema_wallet.json")
+    test.generate_grammer_file()
 
-test = FunctionBuilder("schema_wallet.json", query_parameter_file_path="function_input.txt", mutation_parameter_file_path="function_mutation_input.txt")
-test1 = test.get_query_mappings()
-test2 = test.get_mutation_mappings()
+    test = FunctionBuilder("schema_wallet.json", query_parameter_file_path="function_input.txt", mutation_parameter_file_path="function_mutation_input.txt")
+    test1 = test.get_query_mappings()
+    test2 = test.get_mutation_mappings()
 
-test4 = test.get_query_mapping_by_input_datatype("Message")
-test5 = test.get_query_mapping_by_output_datatype("Message")
-test6 = test.get_mutation_mapping_by_input_datatype("Message")
-test7 = test.get_mutation_mapping_by_output_datatype("Message")
-##test5 = test.get_mutation_mapping("checkoutCompleteFree")
-test.print_function_list('function_list.txt')
-test8 = test.build_function_call_schema("mutation", "createUser")
-test.print_query_parameter_list('function_input.txt')
-#test.read_query_parameter_list('function_input.txt')
-test.print_mutation_parameter_list('function_mutation_input.txt')
-#test.read_mutation_parameter_list('function_mutation_input.txt')
-test3 = ""
+    test4 = test.get_query_mapping_by_input_datatype("Message")
+    test5 = test.get_query_mapping_by_output_datatype("Message")
+    test6 = test.get_mutation_mapping_by_input_datatype("Message")
+    test7 = test.get_mutation_mapping_by_output_datatype("Message")
+    ##test5 = test.get_mutation_mapping("checkoutCompleteFree")
+    test.print_function_list('function_list.txt')
+    test8 = test.build_function_call_schema("mutation", "createUser")
+    test.print_query_parameter_list('function_input.txt')
+    #test.read_query_parameter_list('function_input.txt')
+    test.print_mutation_parameter_list('function_mutation_input.txt')
+    #test.read_mutation_parameter_list('function_mutation_input.txt')
+    test3 = ""
 

@@ -1,7 +1,7 @@
-import yaml
 from request.request import Request
 from graphql_types.callable import Callable
 from fuzzing.fuzzer.fuzzer import Fuzzer
+from fuzzing.process_functions import FunctionBuilder
 
 def is_dynamic_parameter(arg):
     return arg["kind"] == "SCALAR" and arg["name"] == 'ID'
@@ -45,13 +45,6 @@ def traverse_list(oftype, data, callback, schema):
 object_types = ['OBJECT', 'INTERFACE']
 
 def traverse_object(oftype, data, callback, schema):
-    #handle IDs
-    '''
-    if isinstance(oftype, list) and len(oftype) == 2:
-        if oftype[0] == id:
-            callback('id', oftype, data)
-        return
-    '''
     if oftype in schema["objects"]:
         #cache.save("objects", oftype, data)
         callback('objects', oftype, data)
@@ -65,6 +58,7 @@ def traverse_object(oftype, data, callback, schema):
         if field_kind == "SCALAR":
             if field_typename == 'ID':
                 callback('id', oftype, data[field])
+                callback('unique_objects', oftype, data, data[field])
             else:
                 callback(field_typename, oftype, [field, data[field]])
 
@@ -78,34 +72,14 @@ def traverse_object(oftype, data, callback, schema):
             
 
 class Requestor:
-    def __init__(self, req_seq, cache, fuzzer: Fuzzer, url, schema):
+    def __init__(self, req_seq, cache, fuzzer: Fuzzer, url, schema, function_builder: FunctionBuilder):
         self.req_seq = req_seq
         self.cache = cache
         self.fuzzer = fuzzer
         self.url = url
         self.schema = schema
         self.current_id_oftype = ''
-        #self.load_query_inputs(query_inputs)
-        #self.load_mutation_inputs(mutation_inputs)
-    
-    #def load_query_inputs(self, query_inputs):
-        #if isinstance(query_inputs, dict):
-            #self.query_inputs = query_inputs
-        #elif isinstance(query_inputs, str):
-            #self.query_inputs = yaml.load(open(query_inputs))
-        #else:
-            #self.query_inputs = yaml.load(query_inputs)
-
-
-    #def load_mutation_inputs(self, mutation_inputs):
-        #if isinstance(mutation_inputs, dict):
-            #self.mutation_inputs = mutation_inputs
-        #elif isinstance(mutation_inputs, str):
-            #self.mutation_inputs = yaml.load(open(mutation_inputs))
-        #else:
-            #self.mutation_inputs = yaml.load(mutation_inputs)
-
-        
+        self.function_builder = function_builder
 
     def concretize_args(self, args):
         for arg in args:
@@ -140,6 +114,9 @@ class Requestor:
                 else:
                     raise Exception(
                         f"error in concretizing function argument {arg}")
+
+    def handle_error(self, response):
+        return 0
 
     def execute(self, schema):
         for func in self.req_seq:
@@ -177,10 +154,13 @@ class Requestor:
 
             # TODO: store in cache
             # assigned
-            def save_in_cache(cache_type, object_name, value):
-                self.cache.save(cache_type, object_name, value)
+            def save_in_cache(cache_type, object_name, value, id=None):
+                self.cache.save(cache_type, object_name, value, id)
                 
-            traverse_response(response, save_in_cache, schema)
+            # TODO: resolve response & error handling
+            if 'errors' in response:
+                self.handle_error(response)
+            else:
+                traverse_response(response, save_in_cache, schema)
             
-            # TODO: error handling
 

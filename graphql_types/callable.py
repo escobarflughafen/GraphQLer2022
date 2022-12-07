@@ -14,10 +14,12 @@ class Callable(datatype.Datatype):
             sdl=sdl
         )
 
-    def prepare_payload(self, parsed_graphql_schema):
+    def prepare_payload(self, parsed_graphql_schema, function_builder, function_type="query"):
         '''
         generate a unfulfilled dict for arguments and return fields
         '''
+        args_schema = function_builder.build_function_call_schema(function_type, self.name)
+        
         def process_input_object(input_object, all_input_objects):
             processed_input_object = {}
             fields = input_object["fields"]
@@ -32,6 +34,7 @@ class Callable(datatype.Datatype):
             return processed_input_object
 
         def prepare_args(args, all_input_objects):
+            
             prepared_args = {}
             if not args:
                 return None
@@ -43,6 +46,7 @@ class Callable(datatype.Datatype):
                 elif args[arg]["kind"] == "LIST":
                     prepared_args[arg]=[[None, args[arg]["name"]]]
                 elif args[arg]["name"] == 'ID':
+                    
                     prepared_args[arg] = [None, 'ID', args[arg]["ofObject"]]
                 else:
                     prepared_args[arg]=[None, args[arg]["name"]]
