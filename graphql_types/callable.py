@@ -18,7 +18,6 @@ class Callable(datatype.Datatype):
         '''
         generate a unfulfilled dict for arguments and return fields
         '''
-
         def process_input_object(input_object, all_input_objects):
             processed_input_object = {}
             fields = input_object["fields"]
