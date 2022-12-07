@@ -33,6 +33,7 @@ class SchemaBuilder:
         }
         self.instantiate()
 
+    #depreciated
     def instantiate(self):
         self.prepared_schema = {
             "objects": {
@@ -54,7 +55,9 @@ class SchemaBuilder:
                 k: interface.Interface(k, schema_json=self.schema["interfaces"][k]) for k in self.schema["interfaces"]
             },
         }
-
+    
+    def schema(self):
+        return self.schema
 
     def dump(self, fp=None, path=None):
         json_literal = json.dumps(self.schema)

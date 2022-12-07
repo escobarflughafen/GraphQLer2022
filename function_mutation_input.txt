@@ -1,0 +1,116 @@
+createCurrency:
+  input:
+    abbreviation: null
+    country: null
+    symbol: null
+  output:
+    kind: OBJECT
+    name: Currency
+    ofType: null
+createLocation:
+  input:
+    lat: null
+    lng: null
+    name: null
+  output:
+    kind: OBJECT
+    name: Location
+    ofType: null
+createTransaction:
+  input:
+    amount: null
+    currencyID: null
+    payerID: null
+    walletID: null
+  output:
+    kind: OBJECT
+    name: Transaction
+    ofType: null
+createUser:
+  input:
+    description: null
+    firstName: null
+    lastName: null
+  output:
+    kind: OBJECT
+    name: User
+    ofType: null
+createWallet:
+  input:
+    currencyID: null
+    name: null
+    userID: null
+  output:
+    kind: OBJECT
+    name: Wallet
+    ofType: null
+deleteCurrency:
+  input:
+    currencyID: Currency
+  output:
+    kind: OBJECT
+    name: Currency
+    ofType: null
+deleteLocation:
+  input:
+    locationID: Location
+  output:
+    kind: OBJECT
+    name: Location
+    ofType: null
+deleteTransaction:
+  input:
+    transactionID: Transaction
+  output:
+    kind: OBJECT
+    name: Transaction
+    ofType: null
+deleteUser:
+  input:
+    userID: User
+  output:
+    kind: OBJECT
+    name: User
+    ofType: null
+deleteWallet:
+  input:
+    walletID: Wallet
+  output:
+    kind: OBJECT
+    name: Wallet
+    ofType: null
+updateCurrency:
+  input:
+    currencyID: Currency
+  output:
+    kind: OBJECT
+    name: Currency
+    ofType: null
+updateLocation:
+  input:
+    locationID: Location
+  output:
+    kind: OBJECT
+    name: Location
+    ofType: null
+updateTransaction:
+  input:
+    transactionID: Transaction
+  output:
+    kind: OBJECT
+    name: Transaction
+    ofType: null
+updateUser:
+  input:
+    userID: User
+  output:
+    kind: OBJECT
+    name: User
+    ofType: null
+updateWallet:
+  input:
+    walletID: Wallet
+  output:
+    kind: OBJECT
+    name: Wallet
+    ofType: null

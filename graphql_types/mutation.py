@@ -9,5 +9,3 @@ class Mutation(_callable.Callable):
             introspection_json=introspection_json,
             sdl=sdl
         )
-
-        

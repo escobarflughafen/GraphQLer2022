@@ -43,6 +43,8 @@ class Callable(datatype.Datatype):
                         all_input_objects[args[arg]["name"]])
                 elif args[arg]["kind"] == "LIST":
                     prepared_args[arg]=[[None, args[arg]["name"]]]
+                elif args[arg]["name"] == 'ID':
+                    prepared_args[arg] = [None, 'ID', args[arg]["ofObject"]]
                 else:
                     prepared_args[arg]=[None, args[arg]["name"]]
 
@@ -108,6 +110,7 @@ class Callable(datatype.Datatype):
         payload_str += self.name
 
         def dump_args(args, ):
+            print(args)
             arg_str = ''
             if args:
                 for arg in args:
@@ -118,7 +121,7 @@ class Callable(datatype.Datatype):
                         arg_str += '},'
                     else:
                         if isinstance(args[arg], list):
-                            if len(args[arg]) == 2:
+                            if len(args[arg]) == 2 or len(args[arg]) == 3:
                                 if args[arg][1] in ['String', 'ID']:
                                     arg_str += '"' + str(args[arg][0]) + '"'
                                 else:

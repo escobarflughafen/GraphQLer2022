@@ -7,6 +7,7 @@ from pprint import pprint
 from fuzzing.requestor import Requestor
 from fuzzing.cache import Cache
 from fuzzing.fuzzer.constant import ConstantFuzzer
+import yaml
 
 
 def get_args():
@@ -49,6 +50,20 @@ def get_args():
         type=str
     )
 
+    parser.add_argument(
+        '--schema',
+        type=str
+    )
+
+    #parser.add_argument(
+        #'--wordlist-dir', '-w',
+        #type=str
+    #)
+
+    #parser.add_argument(
+
+    #)
+
     return parser
 
 
@@ -77,10 +92,12 @@ if __name__ == '__main__':
             schema_builder.dump(path=args.save)
         else:
             schema_builder.dump()
+        
+        # TODO: output config files
 
     elif args.mode == 'fuzz':
         url = args.url
-
+    
     elif args.mode == 'debug':
         url = args.url
         introspection_json_path = args.introspection_json
@@ -112,7 +129,12 @@ if __name__ == '__main__':
     elif args.mode == 'debug_fuzzing':
         url = args.url
         introspection_json_path = args.introspection_json
-        if url:
+        parsed_schema_path = args.schema
+
+        if parsed_schema_path:
+            with open(parsed_schema_path) as f:
+                schema = json.load(f)
+        elif url:
             schema_builder = parse.SchemaBuilder(url=url)
         elif introspection_json_path:
             with open(introspection_json_path) as f:
@@ -121,6 +143,7 @@ if __name__ == '__main__':
         else:
             raise Exception(
                 "please add corrent introspection source to arguments by --url or --introspection-json")
+        
 
         req_seq = [
             'createUser',
@@ -148,13 +171,14 @@ if __name__ == '__main__':
 
         
 
-        cache = Cache(schema_builder.schema)
+        cache = Cache(schema)
         requestor = Requestor(req_seq,
                               cache,
-                              ConstantFuzzer(schema_builder.schema, cache),
-                              url
+                              ConstantFuzzer(schema, cache),
+                              url,
+                              schema,
                               )
 
-        requestor.execute(schema_builder.schema)
+        requestor.execute(schema)
 
         

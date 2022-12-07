@@ -1,12 +1,10 @@
 import random
-import os
-import sys
-
+import json
 
 class Cache:
     def __init__(self, schema):
         self.schema = schema
-        
+
         self.cache = {
             "id": {
                 objname: [] for objname in schema["objects"]
@@ -24,12 +22,12 @@ class Cache:
 
     def get_random_id_by_type(self, object_name, non_used_only=False, max_attempts=1000):
         '''
-            randomly return a id for a certain object type in the cache 
+            randomly return a id for a certain object type in the cache
         '''
         id_cache = self.cache["id"][object_name]
 
         index = random.randint(0, len(id_cache))
-        cached_object = id_cache[random.randint(0, 0 if len(id_cache)==0 else len(id_cache)-1)]
+        cached_object = id_cache[random.randint(0, len(id_cache))]
 
         if non_used_only:
             attempt_counter = 1
@@ -43,7 +41,7 @@ class Cache:
 
     def get_object_by_id(self, object_name, id):
         '''
-            return a object by id of certain object type 
+            return a object by id of certain object type
         '''
         unique_object_cache = self.cache["unique_objects"]
 
@@ -82,6 +80,23 @@ class Cache:
             "value": value,
             "status": "new"
         })
-        
-    
-    
+
+
+test_response_data = {'data': {'createUser': {'id': 'c04539ff-f88d-4b03-9eda-5b4df555ef51',
+                                              'firstName': 'teststring', 'lastName': 'teststring', 'description': 'teststring', 'wallets': [], 'friends': []}}}
+
+
+test_schema = json.load(open('./testschema.json'))
+
+cache = Cache(test_schema)
+
+
+def load_response_to_cache(response_data: dict, schema: dict, cache: Cache):
+    # TODO: write response parser, use `test_response_data` & `test_schema`
+
+    pass
+
+
+if __name__ == '__main__':
+    # TODO: test here
+    pass

@@ -4,15 +4,12 @@ import os
 import random
 from fuzzing.fuzzer.fuzzer import Fuzzer
 
-
-
 default_constants = {
     'Int': 1,
     'Float': 1.1,
     'String': 'teststring',
     'Enum': 0
 }
-
 
 class ConstantFuzzer(Fuzzer):
 

@@ -5,13 +5,6 @@ STATIC_TYPES = [{'kind'}]
 DYNAMIC_TYPES = [{'kind': 'SCALAR', 'name': 'ID'}, {'kind': 'INPUT_OBJECT'}]
 
 
-lookup = {
-    ''
-}
-
-def get_type(arg, schema):
-    return arg
-
 class Fuzzer:
     def __init__(self, schema, cache: cache.Cache):
         self.cache = cache
@@ -34,8 +27,8 @@ class Fuzzer:
     def resolve_enum(self, arg):
         raise "no default handling for enum argument is defined"
 
-
     def resolve_id(self, id_oftype):
         # TODO: resolve dynamic object
+        # TODO: fetch dynamic id by config file & schema
         dynamic_id = self.cache.get_random_id_by_type(id_oftype)
-        return dynamic_id        
+        return dynamic_id    

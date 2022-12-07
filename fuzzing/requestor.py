@@ -1,10 +1,7 @@
-import sys
-import os
-import random
+import yaml
 from request.request import Request
 from graphql_types.callable import Callable
 from fuzzing.fuzzer.fuzzer import Fuzzer
-
 
 def is_dynamic_parameter(arg):
     return arg["kind"] == "SCALAR" and arg["name"] == 'ID'
@@ -81,26 +78,50 @@ def traverse_object(oftype, data, callback, schema):
             
 
 class Requestor:
-    def __init__(self, req_seq, cache, fuzzer: Fuzzer, url):
+    def __init__(self, req_seq, cache, fuzzer: Fuzzer, url, schema):
         self.req_seq = req_seq
         self.cache = cache
         self.fuzzer = fuzzer
         self.url = url
+        self.schema = schema
         self.current_id_oftype = ''
+        #self.load_query_inputs(query_inputs)
+        #self.load_mutation_inputs(mutation_inputs)
+    
+    #def load_query_inputs(self, query_inputs):
+        #if isinstance(query_inputs, dict):
+            #self.query_inputs = query_inputs
+        #elif isinstance(query_inputs, str):
+            #self.query_inputs = yaml.load(open(query_inputs))
+        #else:
+            #self.query_inputs = yaml.load(query_inputs)
 
-    def concretize_args(self, args, graphql_schema):
+
+    #def load_mutation_inputs(self, mutation_inputs):
+        #if isinstance(mutation_inputs, dict):
+            #self.mutation_inputs = mutation_inputs
+        #elif isinstance(mutation_inputs, str):
+            #self.mutation_inputs = yaml.load(open(mutation_inputs))
+        #else:
+            #self.mutation_inputs = yaml.load(mutation_inputs)
+
+        
+
+    def concretize_args(self, args):
         for arg in args:
             if isinstance(args[arg], dict):
-                self.concretize_args(args[arg], graphql_schema)
+                self.concretize_args(args[arg])
             else:
-                self.concretize_arg(args[arg], graphql_schema)
+                self.concretize_arg(args[arg])
 
-    def concretize_arg(self, arg, graphql_schema):
+
+    def concretize_arg(self, arg):
         if isinstance(arg, dict):
-            self.concretize_args(self, arg, graphql_schema)
+            self.concretize_args(self, arg)
         elif isinstance(arg, list):
+            print(arg)
             if len(arg) == 1:
-                self.concretize_arg(arg[0], graphql_schema)
+                self.concretize_arg(arg[0])
             else:
                 if arg[1] == 'Int':
                     arg[0] = self.fuzzer.resolve_int(arg)
@@ -111,7 +132,9 @@ class Requestor:
                 elif arg[1] == 'Enum':
                     arg[0] = self.fuzzer.resolve_enum(arg)
                 elif arg[1] == 'ID':
-                    arg[0] = self.fuzzer.resolve_id(self.current_id_oftype)
+                    id_of_type = arg[2]
+                    
+                    arg[0] = self.fuzzer.resolve_id(id_of_type)
                     #arg[0] = self.fuzzer.resolve_id(arg)
 
                 else:
@@ -120,6 +143,7 @@ class Requestor:
 
     def execute(self, schema):
         for func in self.req_seq:
+            print("NOW TESTING:", func)
             if func in schema["mutations"]:
                 func_schema = schema["mutations"][func]
                 MODE = Request.MODE_MUTATION
@@ -140,11 +164,13 @@ class Requestor:
             else:
                 self.current_id_oftype = func_schema["type"]["name"]
 
-            self.concretize_args(prepared_args, schema)
+            self.concretize_args(prepared_args)
 
             # TODO: make request
             req_instance = Request(self.url, MODE)
-            req_instance.add_payload(func_instance.stringify_payload())
+            payload_string = func_instance.stringify_payload()
+            req_instance.add_payload(payload_string)
+            print(func_instance.stringify_payload())
 
             response = req_instance.request()
             print(func, '\n', response)
@@ -156,19 +182,5 @@ class Requestor:
                 
             traverse_response(response, save_in_cache, schema)
             
-
             # TODO: error handling
 
-    '''
-    def execute(self, schema):
-        for reqname in self.req_seq:
-            if reqname in schema["queries"]:
-                mode = Request.MODE_QUERY
-            elif reqname in schema["mutations"]:
-                mode = Request.MODE_MUTATION
-            else:
-                raise Exception('Invalid request type - ')
-            req = Request(self.url, mode, )
-            
-        return 
-    '''

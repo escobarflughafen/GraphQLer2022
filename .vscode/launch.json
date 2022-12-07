@@ -1,9 +1,6 @@
 {
     "version": "0.2.0",
     "configurations": [
-
-
-        
         {
             "name": "Python: Test Shopify Schema",
             "type": "python",
@@ -46,8 +43,10 @@
             "args": [
                 "--mode",
                 "debug_fuzzing",
+                "--schema",
+                "./testschema.json",
                 "-u",
-                "http://neogeek.io:4001/graphql",
+                "http://neogeek.io:4001/graphql"
             ]
         }
     ],

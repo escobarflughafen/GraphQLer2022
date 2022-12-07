@@ -25,6 +25,3 @@ def send_request(url, query, next=None):
 
 def fetch_introspection(url="http://neogeek.io:4000/graphql"):
     return send_request(url, introspection_query)
-
-
-
