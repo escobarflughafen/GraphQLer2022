@@ -197,6 +197,7 @@ class FunctionBuilder:
     def get_mutation_mapping(self, mutation_name):
         return self.mutation_datatype_mappings[mutation_name]
 
+    # generate a file with automatically generated function type to let user modify later
     def print_function_list(self, path):
         f = open(path, 'w')
         output_json = {}
@@ -206,6 +207,7 @@ class FunctionBuilder:
         f.close()
         return
 
+    # generate a file with generated parameter type for query types to let user modify later
     def print_query_parameter_list(self, path):
         f = open(path, 'w')
         output_json = {}
@@ -222,6 +224,7 @@ class FunctionBuilder:
         f.close()
         return
 
+    # generate a file with generated parameter type for mutation types to let user modify later
     def print_mutation_parameter_list(self, path):
         f = open(path, 'w')
         output_json = {}
@@ -238,6 +241,7 @@ class FunctionBuilder:
         f.close()
         return
 
+    # combined function for the process control. Generate 1-3 files depending on the existance of quiries and mutations
     def generate_grammer_file(self):
         if self.schema_json.get("queries") != None:
             self.print_query_parameter_list("query_parameter_list.yml")
@@ -253,6 +257,7 @@ class FunctionBuilder:
                 self.mutation_datatype_mappings[function_name]['functionType'] = function_type
         return
 
+    # load the query parameter file and update existing schema to match user input
     def read_query_parameter_list(self, path):
         f = open(path, 'r')
         input_json = yaml.load(f.read())
@@ -262,6 +267,7 @@ class FunctionBuilder:
         f.close()
         return
     
+    # load the mutation parameter file and update existing schema to match user input
     def read_mutation_parameter_list(self, path):
         f = open(path, 'r')
         input_json = yaml.load(f.read())
@@ -271,6 +277,7 @@ class FunctionBuilder:
         f.close()
         return
 
+    # given function type and function name, this function returns the json structure with ofDatatype parameter for the use of function call later
     def build_function_call_schema(self, function_type, function_name):
         output_json = {}
         if function_type == "query":
@@ -284,8 +291,6 @@ class FunctionBuilder:
             for arg_name, arg_body in self.mutation_datatype_mappings[function_name]["rawdata"]["args"].items():
                 output_json[function_name]["args"][arg_name]["ofDatatype"] = self.mutation_datatype_mappings[function_name]["inputDatatype"][arg_name]
         return output_json
-
-        
 
 
     # Estimate possible operation types by checking for key words in the function name
@@ -301,11 +306,10 @@ class FunctionBuilder:
                 self.mutation_datatype_mappings[function_name]["functionType"] = "Update"
             else:
                 self.mutation_datatype_mappings[function_name]["functionType"] = "Unknown"
-        
         return
 
 
-
+    # main function to map datatype with parameters in the query and mutations
     def link_functions_with_datatype(self, category):
         list = {}
         function_objects = self.schema_json[category]
@@ -458,6 +462,8 @@ class FunctionBuilder:
         return None
 
 
+    # check input object and mapping it to possible datatypes
+    # if any ID type exists, it will check the output object for any ID type and mapping the datatype with the input
     def _search_related_object_from_input_object(self, input_object_datatype, id_name, output_object_name):
         result = None
         input_objects = self.input_objects
@@ -475,6 +481,7 @@ class FunctionBuilder:
         return result
 
 
+    # 
     def _link_objects_with_data_type(self):
         list = {}
         for object_name, object_body in self.objects.items():
