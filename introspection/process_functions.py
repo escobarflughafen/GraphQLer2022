@@ -1,10 +1,12 @@
 import json
 import re
+import yaml
+from yaml import Loader
 
 
 class FunctionBuilder:
 
-    def __init__(self, schema_json, function_list_file_path = None, query_datatype_file_path = None, mutation_datatype_file_path = None):
+    def __init__(self, schema_json, function_list_file_path = None, query_datatype_file_path = None, mutation_datatype_file_path = None, query_parameter_file_path = None, mutation_parameter_file_path = None):
         self.schema_json = schema_json
         self.objects = schema_json["objects"]
         self.input_objects = schema_json["inputObjects"]
@@ -28,6 +30,10 @@ class FunctionBuilder:
             data = f.readlines()
             self.update_function_list(data)
             f.close()
+        if query_parameter_file_path != None:
+            self.read_query_parameter_list(query_parameter_file_path)
+        if mutation_parameter_file_path != None:
+            self.read_mutation_parameter_list(mutation_parameter_file_path)
 
 
     def update_function_list(self, newList):
@@ -62,7 +68,7 @@ class FunctionBuilder:
             datatype_list.append(current_datatype)
             for function_name, function_body in self.query_datatype_mappings.items():
                 checker = False
-                # In this first loop we are focusing on finding at lease 1 parameter
+                # In this first loop we are focusing on finding at least 1 parameter
                 # directly associated with the current datatype. This can filter out
                 # previously processed functions and make sure all selected function 
                 # have direct relationship with the current datatype.
@@ -108,7 +114,7 @@ class FunctionBuilder:
             datatype_list.append(current_datatype)
             for function_name, function_body in self.mutation_datatype_mappings.items():
                 checker = False
-                # In this first loop we are focusing on finding at lease 1 parameter
+                # In this first loop we are focusing on finding at least 1 parameter
                 # directly associated with the current datatype. This can filter out
                 # previously processed functions and make sure all selected function 
                 # have direct relationship with the current datatype.
@@ -140,7 +146,7 @@ class FunctionBuilder:
                 function_list[function_name] = function_body
             # If no direct connection, we have to search inside the output object for inner objects
             # Specify explicit to true to limit results with nonNull only
-            elif self._search_function_output_datatype_recursive(current_datatype, function_body["outputDatatype"]["name"], explicit):
+            elif function_body["outputDatatype"]["kind"] == "OBJECT" and self._search_function_output_datatype_recursive(current_datatype, function_body["outputDatatype"]["name"], explicit):
                 function_list[function_name] = function_body
         return function_list
 
@@ -155,14 +161,14 @@ class FunctionBuilder:
                 function_list[function_name] = function_body
             # If no direct connection, we have to search inside the output object for inner objects
             # Specify explicit to true to limit results with nonNull only
-            elif self._search_function_output_datatype_recursive(current_datatype, function_body["outputDatatype"]["name"], explicit):
+            elif function_body["outputDatatype"]["kind"] == "OBJECT" and self._search_function_output_datatype_recursive(current_datatype, function_body["outputDatatype"]["name"], explicit):
                 function_list[function_name] = function_body
                 
         return function_list
 
 
 
-    def _search_function_output_datatype_recursive(self, current_datatype, output_datatype, explicit = False):
+    def _search_function_output_datatype_recursive(self, current_datatype, output_datatype, explicit = False, past_datatype = []):
         output_objects = self.objects
         # if 2 datatypes are matched, we return true immediately
         if current_datatype == output_datatype:
@@ -173,8 +179,9 @@ class FunctionBuilder:
             # with nonNull value.
             for arg_name, arg_body in output_objects[output_datatype]["fields"].items():
                 arg_body = self._get_type(arg_body)
-                if arg_body["kind"] == "OBJECT" and (not explicit or arg_body.get("nonNull") != None):
-                    return self._search_function_output_datatype_recursive(current_datatype, arg_body["name"])
+                if arg_body["kind"] == "OBJECT" and (not explicit or arg_body.get("nonNull") != None) and (arg_body["name"] not in past_datatype):
+                    past_datatype.append(output_datatype)
+                    return self._search_function_output_datatype_recursive(current_datatype, arg_body["name"], explicit, past_datatype)
 
         return False
 
@@ -194,10 +201,59 @@ class FunctionBuilder:
     def print_function_list(self, path):
         f = open(path, 'w')
         for function_name, function_body in self.mutation_datatype_mappings.items():
-            f.writelines(function_name + "\t" + function_body['functionType'] + "\n")
+            f.writelines(function_name + "\t" + function_body["functionType"] + "\n")
         f.close()
         return
 
+    def print_query_parameter_list(self, path):
+        f = open(path, 'w')
+        output_json = {}
+        for function_name, function_body in self.query_datatype_mappings.items():
+            output_json[function_name] = {}
+            output_json[function_name]["input"] = {}
+            if function_body["inputDatatype"] != None:
+                for input_name, input_dependency_object_name in function_body["inputDatatype"].items():
+                    output_json[function_name]["input"][input_name] = input_dependency_object_name
+            else:
+                output_json[function_name]["input"] = None
+            output_json[function_name]["output"] = function_body["outputDatatype"]
+        f.write(yaml.dump(output_json))
+        f.close()
+        return
+
+    def print_mutation_parameter_list(self, path):
+        f = open(path, 'w')
+        output_json = {}
+        for function_name, function_body in self.mutation_datatype_mappings.items():
+            output_json[function_name] = {}
+            output_json[function_name]["input"] = {}
+            if function_body["inputDatatype"] != None:
+                for input_name, input_dependency_object_name in function_body["inputDatatype"].items():
+                    output_json[function_name]["input"][input_name] = input_dependency_object_name
+            else:
+                output_json[function_name]["input"] = None
+            output_json[function_name]["output"] = function_body["outputDatatype"]
+        f.write(yaml.dump(output_json))
+        f.close()
+        return
+
+    def read_query_parameter_list(self, path):
+        f = open(path, 'r')
+        input_json = yaml.load(f.read(), Loader=Loader)
+        for function_name, function_body in input_json.items():
+            self.query_datatype_mappings[function_name]["inputDatatype"] = function_body["input"]
+            self.query_datatype_mappings[function_name]["outputDatatype"] = function_body["output"]
+        f.close()
+        return
+    
+    def read_mutation_parameter_list(self, path):
+        f = open(path, 'r')
+        input_json = yaml.load(f.read(), Loader=Loader)
+        for function_name, function_body in input_json.items():
+            self.mutation_datatype_mappings[function_name]["inputDatatype"] = function_body["input"]
+            self.mutation_datatype_mappings[function_name]["outputDatatype"] = function_body["output"]
+        f.close()
+        return
 
     def print_mutation_datatype_list(self, path):
         f = open(path, 'w')
@@ -240,7 +296,7 @@ class FunctionBuilder:
             output_data_type = self._get_type(output)
 
             # Since I assume every output is actually an Object, so I actually did not check for any other datatypes.
-            if output_data_type["kind"] == "OBJECT" or output_data_type["kind"] == "SCALAR":
+            if output_data_type["kind"] == "OBJECT":
                 list[function_name] = {}
                 # here I just copy the raw data just in case
                 list[function_name]["rawdata"] = function_body
@@ -419,17 +475,21 @@ class FunctionBuilder:
 
 
 
-f = open("neogeek_compiled.json", 'r')
-#f = open("compiled_schema2.json", "r")
+#f = open("shopify_compiled.json", 'r')
+f = open("neogeek_compiled.json", "r")
 objects = json.load(f)
 
 test = FunctionBuilder(objects)
 test1 = test.get_query_mappings()
 test2 = test.get_mutation_mappings()
-#test4 = test.get_query_mapping_by_input_datatype("MailingAddress")
-#test5 = test.get_query_mapping_by_output_datatype("MailingAddress")
-#test6 = test.get_mutation_mapping_by_input_datatype("MailingAddress")
-#test7 = test.get_mutation_mapping_by_output_datatype("MailingAddress", True)
+
+#test4 = test.get_query_mapping_by_input_datatype("Message")
+#test5 = test.get_query_mapping_by_output_datatype("Message")
+#test6 = test.get_mutation_mapping_by_input_datatype("Message")
+#test7 = test.get_mutation_mapping_by_output_datatype("Message")
 ##test5 = test.get_mutation_mapping("checkoutCompleteFree")
-test.print_function_list('function_list.txt')
-test3 = ""
+#test.print_function_list('function_list.txt')
+#test.print_query_parameter_list('function_input.txt')
+#test.print_query_parameter_list('introspection/function_input.txt')
+#test.print_mutation_parameter_list('function_mutation_input.txt')
+#test.print_mutation_parameter_list('introspection/function_mutation_input.txt')

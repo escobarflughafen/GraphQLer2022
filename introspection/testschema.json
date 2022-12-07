@@ -697,6 +697,7 @@
             "type": {
                 "kind": "OBJECT",
                 "name": "User"
+
             },
             "args": {
                 "userID": {
@@ -2035,5 +2036,6 @@
         }
     },
     "enums": {},
-    "interfaces": {}
+    "interfaces": {},
+    "unions": {}
 }
