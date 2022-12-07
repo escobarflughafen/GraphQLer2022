@@ -48,6 +48,10 @@ class FunctionBuilder:
     # processed datatypes. This is to figure out which function to be added into the 
     # fuzzing list.
     def get_query_mapping_by_input_datatype(self, current_datatype = None, datatype_list = []):
+        '''
+        Return all functions with at least 1 input parameters associated with current datatype.
+        
+        '''
         function_list = {}
         if current_datatype == None:
             # Sometimes we will need to get all functions that have independent input datas
@@ -504,14 +508,8 @@ class FunctionBuilder:
 
 
 
-#f = open("shopify_compiled.json", 'r')
-
 test = FunctionBuilder("schema_wallet.json")
 test.generate_grammer_file()
-
-
-
-
 
 test = FunctionBuilder("schema_wallet.json", query_parameter_file_path="function_input.txt", mutation_parameter_file_path="function_mutation_input.txt")
 test1 = test.get_query_mappings()
@@ -521,7 +519,6 @@ test4 = test.get_query_mapping_by_input_datatype("Message")
 test5 = test.get_query_mapping_by_output_datatype("Message")
 test6 = test.get_mutation_mapping_by_input_datatype("Message")
 test7 = test.get_mutation_mapping_by_output_datatype("Message")
-##test5 = test.get_mutation_mapping("checkoutCompleteFree")
 test.print_function_list('function_list.txt')
 test8 = test.build_function_call_schema("mutation", "createUser")
 test.print_query_parameter_list('function_input.txt')
