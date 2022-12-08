@@ -1,0 +1,876 @@
+Task 1/21:
+Fuzzing function: createUser with status: Success
+----- Input string -----
+createUser(firstName: "teststring", lastName: "teststring", description: "teststring", ){
+	id
+	firstName
+	lastName
+	description
+	wallets {
+		id
+		name
+		currency {
+			id
+			abbreviation
+			symbol
+			rate
+			country
+			}
+		transactions {
+			id
+			amount
+			rate
+			description
+			timestamp
+			}
+		user {
+			id
+			firstName
+			lastName
+			description
+			}
+		balance
+		}
+	friends {
+		id
+		firstName
+		lastName
+		description
+		wallets {
+			id
+			name
+			balance
+			}
+		friends {
+			id
+			firstName
+			lastName
+			description
+			}
+		}
+	}
+----- Output string -----
+{'data': {'createUser': {'id': '968493fe-3648-45ad-9603-af7c7146c73d', 'firstName': 'teststring', 'lastName': 'teststring', 'description': 'teststring', 'wallets': [], 'friends': []}}}
+
+
+Task 2/21:
+Fuzzing function: getUser with status: Success
+----- Input string -----
+getUser(userID: "968493fe-3648-45ad-9603-af7c7146c73d", ){
+	id
+	firstName
+	lastName
+	description
+	wallets {
+		id
+		name
+		currency {
+			id
+			abbreviation
+			symbol
+			rate
+			country
+			}
+		transactions {
+			id
+			amount
+			rate
+			description
+			timestamp
+			}
+		user {
+			id
+			firstName
+			lastName
+			description
+			}
+		balance
+		}
+	friends {
+		id
+		firstName
+		lastName
+		description
+		wallets {
+			id
+			name
+			balance
+			}
+		friends {
+			id
+			firstName
+			lastName
+			description
+			}
+		}
+	}
+----- Output string -----
+{'data': {'getUser': {'id': '968493fe-3648-45ad-9603-af7c7146c73d', 'firstName': 'teststring', 'lastName': 'teststring', 'description': 'teststring', 'wallets': [], 'friends': []}}}
+
+
+Task 3/21:
+Fuzzing function: updateUser with status: Success
+----- Input string -----
+updateUser(userID: "968493fe-3648-45ad-9603-af7c7146c73d", firstName: "teststring", lastName: "teststring", description: "teststring", ){
+	id
+	firstName
+	lastName
+	description
+	wallets {
+		id
+		name
+		currency {
+			id
+			abbreviation
+			symbol
+			rate
+			country
+			}
+		transactions {
+			id
+			amount
+			rate
+			description
+			timestamp
+			}
+		user {
+			id
+			firstName
+			lastName
+			description
+			}
+		balance
+		}
+	friends {
+		id
+		firstName
+		lastName
+		description
+		wallets {
+			id
+			name
+			balance
+			}
+		friends {
+			id
+			firstName
+			lastName
+			description
+			}
+		}
+	}
+----- Output string -----
+{'data': {'updateUser': {'id': '968493fe-3648-45ad-9603-af7c7146c73d', 'firstName': 'teststring', 'lastName': 'teststring', 'description': 'teststring', 'wallets': [], 'friends': []}}}
+
+
+Task 4/21:
+Fuzzing function: createCurrency with status: Success
+----- Input string -----
+createCurrency(abbreviation: "teststring", symbol: "teststring", country: "teststring", ){
+	id
+	abbreviation
+	symbol
+	rate
+	country
+	}
+----- Output string -----
+{'data': {'createCurrency': {'id': 'b962aced-77ff-4f18-80fc-12bccd23b21a', 'abbreviation': 'teststring', 'symbol': 'teststring', 'rate': 1, 'country': 'teststring'}}}
+
+
+Task 5/21:
+Fuzzing function: createWallet with status: Success
+----- Input string -----
+createWallet(name: "teststring", currencyID: "b962aced-77ff-4f18-80fc-12bccd23b21a", userID: "968493fe-3648-45ad-9603-af7c7146c73d", ){
+	id
+	name
+	currency {
+		id
+		abbreviation
+		symbol
+		rate
+		country
+		}
+	transactions {
+		id
+		amount
+		rate
+		payer {
+			id
+			firstName
+			lastName
+			description
+			}
+		wallet {
+			id
+			name
+			balance
+			}
+		description
+		location {
+			id
+			lat
+			lng
+			name
+			}
+		timestamp
+		}
+	user {
+		id
+		firstName
+		lastName
+		description
+		wallets {
+			id
+			name
+			balance
+			}
+		friends {
+			id
+			firstName
+			lastName
+			description
+			}
+		}
+	balance
+	}
+----- Output string -----
+{'data': {'createWallet': {'id': 'f6bca42d-56ef-4f9c-9078-9940ef298eb0', 'name': 'teststring', 'currency': {'id': 'b962aced-77ff-4f18-80fc-12bccd23b21a', 'abbreviation': 'teststring', 'symbol': 'teststring', 'rate': 1, 'country': 'teststring'}, 'transactions': [], 'user': {'id': '968493fe-3648-45ad-9603-af7c7146c73d', 'firstName': 'teststring', 'lastName': 'teststring', 'description': 'teststring', 'wallets': [], 'friends': []}, 'balance': 0}}}
+
+
+Task 6/21:
+Fuzzing function: getCurrency with status: Success
+----- Input string -----
+getCurrency(currencyID: "b962aced-77ff-4f18-80fc-12bccd23b21a", ){
+	id
+	abbreviation
+	symbol
+	rate
+	country
+	}
+----- Output string -----
+{'data': {'getCurrency': {'id': 'b962aced-77ff-4f18-80fc-12bccd23b21a', 'abbreviation': 'teststring', 'symbol': 'teststring', 'rate': 1, 'country': 'teststring'}}}
+
+
+Task 7/21:
+Fuzzing function: updateCurrency with status: Success
+----- Input string -----
+updateCurrency(currencyID: "b962aced-77ff-4f18-80fc-12bccd23b21a", abbreviation: "teststring", symbol: "teststring", country: "teststring", ){
+	id
+	abbreviation
+	symbol
+	rate
+	country
+	}
+----- Output string -----
+{'data': {'updateCurrency': {'id': 'b962aced-77ff-4f18-80fc-12bccd23b21a', 'abbreviation': 'teststring', 'symbol': 'teststring', 'rate': 1, 'country': 'teststring'}}}
+
+
+Task 8/21:
+Fuzzing function: createLocation with status: Success
+----- Input string -----
+createLocation(lat: 1.1, lng: 1.1, name: "teststring", ){
+	id
+	lat
+	lng
+	name
+	}
+----- Output string -----
+{'data': {'createLocation': {'id': 'f066a89d-fea5-4921-a757-bb7e642bc3f6', 'lat': 1.1, 'lng': 1.1, 'name': 'teststring'}}}
+
+
+Task 9/21:
+Fuzzing function: getLocation with status: Success
+----- Input string -----
+getLocation(locationID: "f066a89d-fea5-4921-a757-bb7e642bc3f6", ){
+	id
+	lat
+	lng
+	name
+	}
+----- Output string -----
+{'data': {'getLocation': {'id': 'f066a89d-fea5-4921-a757-bb7e642bc3f6', 'lat': 1.1, 'lng': 1.1, 'name': 'teststring'}}}
+
+
+Task 10/21:
+Fuzzing function: updateLocation with status: Success
+----- Input string -----
+updateLocation(locationID: "f066a89d-fea5-4921-a757-bb7e642bc3f6", lat: 1.1, lng: 1.1, name: "teststring", ){
+	id
+	lat
+	lng
+	name
+	}
+----- Output string -----
+{'data': {'updateLocation': {'id': 'f066a89d-fea5-4921-a757-bb7e642bc3f6', 'lat': 1.1, 'lng': 1.1, 'name': 'teststring'}}}
+
+
+Task 11/21:
+Fuzzing function: createWallet with status: Success
+----- Input string -----
+createWallet(name: "teststring", currencyID: "b962aced-77ff-4f18-80fc-12bccd23b21a", userID: "968493fe-3648-45ad-9603-af7c7146c73d", ){
+	id
+	name
+	currency {
+		id
+		abbreviation
+		symbol
+		rate
+		country
+		}
+	transactions {
+		id
+		amount
+		rate
+		payer {
+			id
+			firstName
+			lastName
+			description
+			}
+		wallet {
+			id
+			name
+			balance
+			}
+		description
+		location {
+			id
+			lat
+			lng
+			name
+			}
+		timestamp
+		}
+	user {
+		id
+		firstName
+		lastName
+		description
+		wallets {
+			id
+			name
+			balance
+			}
+		friends {
+			id
+			firstName
+			lastName
+			description
+			}
+		}
+	balance
+	}
+----- Output string -----
+{'data': {'createWallet': {'id': '0069dc21-f547-4c78-b899-ab56b0b1d22a', 'name': 'teststring', 'currency': {'id': 'b962aced-77ff-4f18-80fc-12bccd23b21a', 'abbreviation': 'teststring', 'symbol': 'teststring', 'rate': 1, 'country': 'teststring'}, 'transactions': [], 'user': {'id': '968493fe-3648-45ad-9603-af7c7146c73d', 'firstName': 'teststring', 'lastName': 'teststring', 'description': 'teststring', 'wallets': [], 'friends': []}, 'balance': 0}}}
+
+
+Task 12/21:
+Fuzzing function: getWallet with status: Success
+----- Input string -----
+getWallet(walletID: "0069dc21-f547-4c78-b899-ab56b0b1d22a", ){
+	id
+	name
+	currency {
+		id
+		abbreviation
+		symbol
+		rate
+		country
+		}
+	transactions {
+		id
+		amount
+		rate
+		payer {
+			id
+			firstName
+			lastName
+			description
+			}
+		wallet {
+			id
+			name
+			balance
+			}
+		description
+		location {
+			id
+			lat
+			lng
+			name
+			}
+		timestamp
+		}
+	user {
+		id
+		firstName
+		lastName
+		description
+		wallets {
+			id
+			name
+			balance
+			}
+		friends {
+			id
+			firstName
+			lastName
+			description
+			}
+		}
+	balance
+	}
+----- Output string -----
+{'data': {'getWallet': {'id': '0069dc21-f547-4c78-b899-ab56b0b1d22a', 'name': 'teststring', 'currency': {'id': 'b962aced-77ff-4f18-80fc-12bccd23b21a', 'abbreviation': 'teststring', 'symbol': 'teststring', 'rate': 1, 'country': 'teststring'}, 'transactions': [], 'user': {'id': '968493fe-3648-45ad-9603-af7c7146c73d', 'firstName': 'teststring', 'lastName': 'teststring', 'description': 'teststring', 'wallets': [], 'friends': []}, 'balance': 0}}}
+
+
+Task 13/21:
+Fuzzing function: updateWallet with status: Success
+----- Input string -----
+updateWallet(walletID: "f6bca42d-56ef-4f9c-9078-9940ef298eb0", name: "teststring", ){
+	id
+	name
+	currency {
+		id
+		abbreviation
+		symbol
+		rate
+		country
+		}
+	transactions {
+		id
+		amount
+		rate
+		payer {
+			id
+			firstName
+			lastName
+			description
+			}
+		wallet {
+			id
+			name
+			balance
+			}
+		description
+		location {
+			id
+			lat
+			lng
+			name
+			}
+		timestamp
+		}
+	user {
+		id
+		firstName
+		lastName
+		description
+		wallets {
+			id
+			name
+			balance
+			}
+		friends {
+			id
+			firstName
+			lastName
+			description
+			}
+		}
+	balance
+	}
+----- Output string -----
+{'data': {'updateWallet': {'id': 'f6bca42d-56ef-4f9c-9078-9940ef298eb0', 'name': 'teststring', 'currency': {'id': 'b962aced-77ff-4f18-80fc-12bccd23b21a', 'abbreviation': 'teststring', 'symbol': 'teststring', 'rate': 1, 'country': 'teststring'}, 'transactions': [], 'user': {'id': '968493fe-3648-45ad-9603-af7c7146c73d', 'firstName': 'teststring', 'lastName': 'teststring', 'description': 'teststring', 'wallets': [], 'friends': []}, 'balance': 0}}}
+
+
+Task 14/21:
+Fuzzing function: createTransaction with status: Success
+----- Input string -----
+createTransaction(amount: 1.1, payerID: "968493fe-3648-45ad-9603-af7c7146c73d", walletID: "0069dc21-f547-4c78-b899-ab56b0b1d22a", currencyID: "b962aced-77ff-4f18-80fc-12bccd23b21a", ){
+	id
+	amount
+	rate
+	payer {
+		id
+		firstName
+		lastName
+		description
+		wallets {
+			id
+			name
+			balance
+			}
+		friends {
+			id
+			firstName
+			lastName
+			description
+			}
+		}
+	wallet {
+		id
+		name
+		currency {
+			id
+			abbreviation
+			symbol
+			rate
+			country
+			}
+		transactions {
+			id
+			amount
+			rate
+			description
+			timestamp
+			}
+		user {
+			id
+			firstName
+			lastName
+			description
+			}
+		balance
+		}
+	description
+	location {
+		id
+		lat
+		lng
+		name
+		}
+	timestamp
+	}
+----- Output string -----
+{'data': {'createTransaction': {'id': '30abc227-8f9b-411c-9dd0-6c6f4674ee99', 'amount': 1.1, 'rate': 1, 'payer': {'id': '968493fe-3648-45ad-9603-af7c7146c73d', 'firstName': 'teststring', 'lastName': 'teststring', 'description': 'teststring', 'wallets': [], 'friends': []}, 'wallet': {'id': '0069dc21-f547-4c78-b899-ab56b0b1d22a', 'name': 'teststring', 'currency': {'id': 'b962aced-77ff-4f18-80fc-12bccd23b21a', 'abbreviation': 'teststring', 'symbol': 'teststring', 'rate': 1, 'country': 'teststring'}, 'transactions': [], 'user': {'id': '968493fe-3648-45ad-9603-af7c7146c73d', 'firstName': 'teststring', 'lastName': 'teststring', 'description': 'teststring'}, 'balance': 0}, 'description': None, 'location': None, 'timestamp': '1670459189404'}}}
+
+
+Task 15/21:
+Fuzzing function: getTransaction with status: Success
+----- Input string -----
+getTransaction(transactionID: "30abc227-8f9b-411c-9dd0-6c6f4674ee99", ){
+	id
+	amount
+	rate
+	payer {
+		id
+		firstName
+		lastName
+		description
+		wallets {
+			id
+			name
+			balance
+			}
+		friends {
+			id
+			firstName
+			lastName
+			description
+			}
+		}
+	wallet {
+		id
+		name
+		currency {
+			id
+			abbreviation
+			symbol
+			rate
+			country
+			}
+		transactions {
+			id
+			amount
+			rate
+			description
+			timestamp
+			}
+		user {
+			id
+			firstName
+			lastName
+			description
+			}
+		balance
+		}
+	description
+	location {
+		id
+		lat
+		lng
+		name
+		}
+	timestamp
+	}
+----- Output string -----
+{'data': {'getTransaction': {'id': '30abc227-8f9b-411c-9dd0-6c6f4674ee99', 'amount': 1.1, 'rate': 1, 'payer': {'id': '968493fe-3648-45ad-9603-af7c7146c73d', 'firstName': 'teststring', 'lastName': 'teststring', 'description': 'teststring', 'wallets': [], 'friends': []}, 'wallet': {'id': '0069dc21-f547-4c78-b899-ab56b0b1d22a', 'name': 'teststring', 'currency': {'id': 'b962aced-77ff-4f18-80fc-12bccd23b21a', 'abbreviation': 'teststring', 'symbol': 'teststring', 'rate': 1, 'country': 'teststring'}, 'transactions': [], 'user': {'id': '968493fe-3648-45ad-9603-af7c7146c73d', 'firstName': 'teststring', 'lastName': 'teststring', 'description': 'teststring'}, 'balance': 0}, 'description': None, 'location': None, 'timestamp': '1670459189404'}}}
+
+
+Task 16/21:
+Fuzzing function: updateTransaction with status: Success
+----- Input string -----
+updateTransaction(transactionID: "30abc227-8f9b-411c-9dd0-6c6f4674ee99", amount: 1.1, payer: "968493fe-3648-45ad-9603-af7c7146c73d", description: "teststring", ){
+	id
+	amount
+	rate
+	payer {
+		id
+		firstName
+		lastName
+		description
+		wallets {
+			id
+			name
+			balance
+			}
+		friends {
+			id
+			firstName
+			lastName
+			description
+			}
+		}
+	wallet {
+		id
+		name
+		currency {
+			id
+			abbreviation
+			symbol
+			rate
+			country
+			}
+		transactions {
+			id
+			amount
+			rate
+			description
+			timestamp
+			}
+		user {
+			id
+			firstName
+			lastName
+			description
+			}
+		balance
+		}
+	description
+	location {
+		id
+		lat
+		lng
+		name
+		}
+	timestamp
+	}
+----- Output string -----
+{'data': {'updateTransaction': {'id': '30abc227-8f9b-411c-9dd0-6c6f4674ee99', 'amount': 1.1, 'rate': 1, 'payer': {'id': '968493fe-3648-45ad-9603-af7c7146c73d', 'firstName': 'teststring', 'lastName': 'teststring', 'description': 'teststring', 'wallets': [], 'friends': []}, 'wallet': {'id': '0069dc21-f547-4c78-b899-ab56b0b1d22a', 'name': 'teststring', 'currency': {'id': 'b962aced-77ff-4f18-80fc-12bccd23b21a', 'abbreviation': 'teststring', 'symbol': 'teststring', 'rate': 1, 'country': 'teststring'}, 'transactions': [], 'user': {'id': '968493fe-3648-45ad-9603-af7c7146c73d', 'firstName': 'teststring', 'lastName': 'teststring', 'description': 'teststring'}, 'balance': 0}, 'description': 'teststring', 'location': None, 'timestamp': '1670459189404'}}}
+
+
+Task 17/21:
+Fuzzing function: deleteTransaction with status: Success
+----- Input string -----
+deleteTransaction(transactionID: "30abc227-8f9b-411c-9dd0-6c6f4674ee99", ){
+	id
+	amount
+	rate
+	payer {
+		id
+		firstName
+		lastName
+		description
+		wallets {
+			id
+			name
+			balance
+			}
+		friends {
+			id
+			firstName
+			lastName
+			description
+			}
+		}
+	wallet {
+		id
+		name
+		currency {
+			id
+			abbreviation
+			symbol
+			rate
+			country
+			}
+		transactions {
+			id
+			amount
+			rate
+			description
+			timestamp
+			}
+		user {
+			id
+			firstName
+			lastName
+			description
+			}
+		balance
+		}
+	description
+	location {
+		id
+		lat
+		lng
+		name
+		}
+	timestamp
+	}
+----- Output string -----
+{'data': {'deleteTransaction': {'id': '30abc227-8f9b-411c-9dd0-6c6f4674ee99', 'amount': 1.1, 'rate': 1, 'payer': {'id': '968493fe-3648-45ad-9603-af7c7146c73d', 'firstName': 'teststring', 'lastName': 'teststring', 'description': 'teststring', 'wallets': [], 'friends': []}, 'wallet': {'id': '0069dc21-f547-4c78-b899-ab56b0b1d22a', 'name': 'teststring', 'currency': {'id': 'b962aced-77ff-4f18-80fc-12bccd23b21a', 'abbreviation': 'teststring', 'symbol': 'teststring', 'rate': 1, 'country': 'teststring'}, 'transactions': [], 'user': {'id': '968493fe-3648-45ad-9603-af7c7146c73d', 'firstName': 'teststring', 'lastName': 'teststring', 'description': 'teststring'}, 'balance': 0}, 'description': 'teststring', 'location': None, 'timestamp': '1670459189404'}}}
+
+
+Task 18/21:
+Fuzzing function: deleteWallet with status: Success
+----- Input string -----
+deleteWallet(walletID: "f6bca42d-56ef-4f9c-9078-9940ef298eb0", ){
+	id
+	name
+	currency {
+		id
+		abbreviation
+		symbol
+		rate
+		country
+		}
+	transactions {
+		id
+		amount
+		rate
+		payer {
+			id
+			firstName
+			lastName
+			description
+			}
+		wallet {
+			id
+			name
+			balance
+			}
+		description
+		location {
+			id
+			lat
+			lng
+			name
+			}
+		timestamp
+		}
+	user {
+		id
+		firstName
+		lastName
+		description
+		wallets {
+			id
+			name
+			balance
+			}
+		friends {
+			id
+			firstName
+			lastName
+			description
+			}
+		}
+	balance
+	}
+----- Output string -----
+{'data': {'deleteWallet': {'id': 'f6bca42d-56ef-4f9c-9078-9940ef298eb0', 'name': 'teststring', 'currency': {'id': 'b962aced-77ff-4f18-80fc-12bccd23b21a', 'abbreviation': 'teststring', 'symbol': 'teststring', 'rate': 1, 'country': 'teststring'}, 'transactions': [], 'user': {'id': '968493fe-3648-45ad-9603-af7c7146c73d', 'firstName': 'teststring', 'lastName': 'teststring', 'description': 'teststring', 'wallets': [], 'friends': []}, 'balance': 0}}}
+
+
+Task 19/21:
+Fuzzing function: deleteLocation with status: Success
+----- Input string -----
+deleteLocation(locationID: "f066a89d-fea5-4921-a757-bb7e642bc3f6", ){
+	id
+	lat
+	lng
+	name
+	}
+----- Output string -----
+{'data': {'deleteLocation': {'id': 'f066a89d-fea5-4921-a757-bb7e642bc3f6', 'lat': 1.1, 'lng': 1.1, 'name': 'teststring'}}}
+
+
+Task 20/21:
+Fuzzing function: deleteCurrency with status: Success
+----- Input string -----
+deleteCurrency(currencyID: "b962aced-77ff-4f18-80fc-12bccd23b21a", ){
+	id
+	abbreviation
+	symbol
+	rate
+	country
+	}
+----- Output string -----
+{'data': {'deleteCurrency': {'id': 'b962aced-77ff-4f18-80fc-12bccd23b21a', 'abbreviation': 'teststring', 'symbol': 'teststring', 'rate': 1, 'country': 'teststring'}}}
+
+
+Task 21/21:
+Fuzzing function: deleteUser with status: Success
+----- Input string -----
+deleteUser(userID: "968493fe-3648-45ad-9603-af7c7146c73d", ){
+	id
+	firstName
+	lastName
+	description
+	wallets {
+		id
+		name
+		currency {
+			id
+			abbreviation
+			symbol
+			rate
+			country
+			}
+		transactions {
+			id
+			amount
+			rate
+			description
+			timestamp
+			}
+		user {
+			id
+			firstName
+			lastName
+			description
+			}
+		balance
+		}
+	friends {
+		id
+		firstName
+		lastName
+		description
+		wallets {
+			id
+			name
+			balance
+			}
+		friends {
+			id
+			firstName
+			lastName
+			description
+			}
+		}
+	}
+----- Output string -----
+{'data': {'deleteUser': {'id': '968493fe-3648-45ad-9603-af7c7146c73d', 'firstName': 'teststring', 'lastName': 'teststring', 'description': 'teststring', 'wallets': [], 'friends': []}}}
+
+
