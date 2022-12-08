@@ -22,4 +22,7 @@ temp/*
 */temp
 test/*
 
+#debug files
+debug*/*
+
 

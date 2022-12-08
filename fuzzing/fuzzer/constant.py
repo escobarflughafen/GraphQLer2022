@@ -8,7 +8,8 @@ default_constants = {
     'Int': 1,
     'Float': 1.1,
     'String': 'teststring',
-    'Enum': 0
+    'Enum': 0,
+    "Boolean": True
 }
 
 class ConstantFuzzer(Fuzzer):
@@ -35,3 +36,5 @@ class ConstantFuzzer(Fuzzer):
 
         return enum_oftype["values"][0]["name"]
     
+    def resolve_boolean(self, arg):
+        return self.constants["Boolean"]

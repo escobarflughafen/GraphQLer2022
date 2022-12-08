@@ -1,10 +1,12 @@
 from graphql_types import datatype
 
+
 def get_type(type):
-        if type["name"] == None:
-            return get_type(type["ofType"])
-        else:
-            return type
+    if type["name"] == None:
+        return get_type(type["ofType"])
+    else:
+        return type
+
 
 class Callable(datatype.Datatype):
     """
@@ -22,21 +24,8 @@ class Callable(datatype.Datatype):
         '''
         generate a unfulfilled dict for arguments and return fields
         '''
-        
-        def process_input_object(input_object, all_input_objects):
-            processed_input_object = {}
-            fields = input_object["fields"]
 
-            for field in fields:
-                if fields[field]["kind"] == "INPUT_OBJECT":
-                    processed_input_object[field] = process_input_object(
-                        all_input_objects[fields[field]["name"]], all_input_objects)
-                else:
-                    # TODO: check INPUT_OBJECT 120822
-                    processed_input_object[field] = [None, fields[field]["name"]]
-
-            return processed_input_object
-
+        '''
         def prepare_args(args, all_input_objects):
             
             prepared_args = {}
@@ -56,15 +45,70 @@ class Callable(datatype.Datatype):
                     prepared_args[arg]=[None, args[arg]["name"]]
 
             return prepared_args
+        '''
 
-        def prepare_return_fields(return_type, all_objects, max_depth = 3):
+        def prepare_input_object(arg, all_input_objects):
+            #input_object = all_input_objects[arg["name"]]
+            processed_input_object = {}
+            fields = arg["args"]
+
+            for field in fields:
+                if fields[field]["kind"] == "INPUT_OBJECT":
+                    processed_input_object[field] = prepare_input_object(
+                        fields[field], all_input_objects)
+                elif fields[field]["kind"] == 'LIST':
+                    processed_input_object[field] = prepare_list(
+                        fields[field]["ofType"], all_input_objects)
+                else:
+                    processed_input_object[field] = prepare_scalar(
+                        fields[field], all_input_objects)
+
+            return processed_input_object
+
+        def prepare_args(args, all_input_objects):
+            prepared_args = {}
+            if not args:
+                return prepared_args
+
+            for arg in args:
+                if args[arg]["kind"] == "INPUT_OBJECT":
+                    prepared_args[arg] = prepare_input_object(
+                        args[arg], all_input_objects
+                    )
+                elif args[arg]["kind"] == "LIST":
+                    prepared_args[arg] = prepare_list(
+                        args[arg]["ofType"], all_input_objects)
+                else:
+                    prepared_args[arg] = prepare_scalar(
+                        args[arg], all_input_objects)
+
+            return prepared_args
+
+        def prepare_scalar(arg, all_input_objects):
+            if arg["name"] == "ID":
+                return [None, 'ID', arg["ofDatatype"]]
+
+            return [None, arg["name"]]
+
+        def prepare_list(arg, all_input_objects):
+            prepared_list = []
+
+            if arg["kind"] == "LIST":
+                prepared_list.append(prepare_list(
+                    arg["ofType"], all_input_objects))
+            elif arg["kind"] == "INPUT_OBJECT":
+                prepared_list.append(
+                    prepare_input_object(arg, all_input_objects))
+            else:
+                prepared_list.append(prepare_scalar(arg, all_input_objects))
+
+            return prepared_list
+
+        def prepare_return_fields(return_type, all_objects, max_depth=3):
             '''
                 return all fields of return object
             '''
-            prepared_return_fields={}
-
-            def traverse_list():
-                pass
+            prepared_return_fields = {}
 
             def traverse_fields(prepared_return_fields, fields, all_objects, max_depth):
                 if max_depth == 0:
@@ -72,21 +116,20 @@ class Callable(datatype.Datatype):
 
                 for field in fields:
                     if fields[field]["kind"] == 'OBJECT':
-                        child_obj_fields=all_objects[fields[field]
+                        child_obj_fields = all_objects[fields[field]
                                                        ["name"]]["fields"]
                         child_obj_query_fields = {}
                         prepared_return_fields[field] = child_obj_query_fields
                         traverse_fields(
                             child_obj_query_fields, child_obj_fields, all_objects, max_depth-1)
 
-                    
                     elif fields[field]["kind"] == 'LIST':
                         # TODO: Process SCALAR & ENUMS
-                        # TODO: Recursively resolve lists
+                        # TODO: Recursively resolve lists 120922
                         of_type = get_type(fields[field]["ofType"])
-                        if of_type == 'OBJECT':                            
+                        if of_type == 'OBJECT':
                             child_obj = all_objects[fields[field]
-                                                ["ofType"]["name"]]
+                                                    ["ofType"]["name"]]
                             child_obj_query_fields = {}
                             prepared_return_fields[field] = child_obj_query_fields
                             traverse_fields(
@@ -118,6 +161,7 @@ class Callable(datatype.Datatype):
             "fields": prepare_return_fields(self.schema["type"], gql_server_schema['objects'])
         }
 
+
     def stringify_payload(self):
         '''
         return payload as string for request.request.sequence
@@ -127,7 +171,7 @@ class Callable(datatype.Datatype):
         payload_str += self.name
 
         def dump_args(args, ):
-            #print(args)
+            # print(args)
             arg_str = ''
             if args:
                 for arg in args:

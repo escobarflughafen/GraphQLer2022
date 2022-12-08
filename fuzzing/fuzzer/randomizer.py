@@ -5,7 +5,8 @@ default_constants = {
     'Int': 1,
     'Float': 1.1,
     'String': 'teststring',
-    'Enum': 0
+    'Enum': 0,
+    'Boolean': True,
 }
 
 class RandomFuzzer(Fuzzer):
@@ -33,15 +34,8 @@ class RandomFuzzer(Fuzzer):
         return string
 
     def resolve_enum(self, arg):
-        enum_schema = self.schema["enums"]
+        return None    
 
-        enum_oftype = enum_schema[arg["kind"]]
-        enum_values = [v["name"] for v in enum_oftype["values"]]
-        
-        wordlist_value = self.wordlists["Enum"].readline()
-        
-        if wordlist_value not in enum_values:
-            return enum_values[default_constants['Enum']]
-
-        return self.wordlists["Enum"].readline()
+    def resolve_boolean(self, arg):
+        return random.random() > 0.5
     

@@ -2,7 +2,6 @@ import json
 import re
 import yaml
 import os
-import pprint
 
 
 class FunctionBuilder:
@@ -354,19 +353,17 @@ class FunctionBuilder:
                         output_json[function_name]["args"][arg_name]["ofDatatype"] = self.mutation_datatype_mappings[function_name]["inputDatatype"][arg_name]
             else:
                 output_json[function_name]["args"] = {}
-        #pprint.pprint(output_json)
+        print(json.dumps(output_json))
         return output_json
 
 
     def _build_inner_input_datatype_call_schema(self, input_object_name, datatype_mapping):
         output_json = self.input_objects[input_object_name]["fields"]
         for arg_name, arg_body in self.input_objects[input_object_name]["fields"].items():
-            if arg_body["kind"] == "LIST":
-                output_json[arg_name]["ofType"]["args"] = self._build_inner_input_datatype_call_schema(arg_body["ofType"]["name"], datatype_mapping[arg_name])
             if arg_body["kind"] == "INPUT_OBJECT":
-                output_json[arg_name]["args"] = self._build_inner_input_datatype_call_schema(arg_body["name"], datatype_mapping[arg_name])
+                output_json[arg_name] = self._build_inner_input_datatype_call_schema(arg_body["name"], datatype_mapping["arg_name"])
             else:
-                output_json[arg_name]["ofDatatype"] = datatype_mapping[arg_name]
+                output_json[arg_name]["ofDatatype"] = datatype_mapping["arg_name"]
         return output_json
 
 

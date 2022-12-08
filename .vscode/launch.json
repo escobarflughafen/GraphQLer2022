@@ -1,6 +1,8 @@
 {
     "version": "0.2.0",
     "configurations": [
+
+
         
         {
             "name": "Python: Fuzzing Suomi",
@@ -61,7 +63,7 @@
                 "--schema",
                 "./debug2",
                 "-u",
-                "http://neogeek.io:4001/graphql"
+                "http://neogeek.io:4000/graphql"
             ]
         }
     ],

@@ -27,6 +27,9 @@ class Fuzzer:
     def resolve_enum(self, arg):
         raise "no default handling for enum argument is defined"
 
+    def resolve_boolean(self, arg):
+        raise "no default handling for boolean argument is defined"
+
     def resolve_id(self, id_oftype):
         # TODO: resolve dynamic object
         # TODO: fetch dynamic id by config file & schema

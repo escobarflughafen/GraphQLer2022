@@ -106,7 +106,7 @@ class Requestor:
 
     def concretize_arg(self, arg):
         if isinstance(arg, dict):
-            self.concretize_args(self, arg)
+            self.concretize_args(arg)
         elif isinstance(arg, list):
             if len(arg) == 1:
                 self.concretize_arg(arg[0])
@@ -121,8 +121,9 @@ class Requestor:
                     arg[0] = self.fuzzer.resolve_enum(arg)
                 elif arg[1] == 'ID':
                     id_of_type = arg[2]
-
                     arg[0] = self.fuzzer.resolve_id(id_of_type)
+                elif arg[1] == 'Boolean':
+                    arg[0] = self.fuzzer.resolve_boolean(arg)
 
                 else:
                     raise Exception(
