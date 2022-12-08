@@ -1,289 +1,435 @@
-var express = require('express');
-var { graphqlHTTP } = require('express-graphql');
-var { buildSchema } = require('graphql');
-var mysql = require('mysql');
-var con = mysql.createConnection({
-    host: "192.168.10.2",
-    port: "3307",
-    user: "graphql",
-    password: "jE4-Wl5oln",
-    database: "graphQL"
-});
+const fs = require('fs');
+const {v4: uuid} = require('uuid');
 
-con.connect(function(err){
-    if (err) throw err;
-    con.query("SELECT * FROM customers", function (err, result, fields) {
-    if (err) throw err;
-    console.log(result);
-  });
-})
+import { makeExecutableSchema } from 'graphql-tools';
 
 
-/**
- * Copyright (c) 2015, Facebook, Inc.
- * All rights reserved.
- *
- * This source code is licensed under the license found in the
- * LICENSE file in the root directory of this source tree.
- */
-
- import {
-    GraphQLSchema,
-    GraphQLObjectType,
-    GraphQLInterfaceType,
-    GraphQLEnumType,
-    GraphQLList,
-    GraphQLNonNull,
-    GraphQLString
-  } from 'graphql';
-  
-  import { makeExecutableSchema } from 'graphql-tools';
-  
-  import { PubSub, SubscriptionManager, withFilter } from 'graphql-subscriptions';
-  
-  const pubsub = new PubSub();
-  const ADDED_REVIEW_TOPIC = 'new_review';
-  
-  const schemaString = `
-  schema {
-    query: Query
-    mutation: Mutation
-    subscription: Subscription
-  }
-
-  # The query type, represents all of the entry points into our object graph
-  type Query {
-    messages: [Message]
-    authors: [Author]
-    getMessage(id: ID!): Message
-    getAuthor(id: ID!): Author
-  }
-
-  # The mutation type, represents all updates we can make to our data
-  type Mutation {
-    createMessage(input: MessageInput): Message
-    createAuthor(input: AuthorInput): Author
-    updateMessage(id: ID!, input: MessageInput): Message
-    updateAuthor(id: ID!, input: AuthorInput): Author
-    deleteMessage(id: ID!): Message
-    deleteAuthor(id: ID!): Author
-  }
-
-  # The subscription type, represents all subscriptions we can make to our data
-  type Subscription {
-  }
+const schemaString = fs.readFileSync('data/schema.gql', 'utf-8');
+var users = []
+var transactions = []
+var locations = []
+var currencies = []
+var wallets = []
 
 
+function getUser(id) {
+    return users.find((u) => u.id === id);
+}
 
-  input MessageInput {
-    content: String
-    authorId: String
-  }
+function getUsers() {
+    return users;
+}
 
-  input AuthorInput {
-    firstName: String
-    lastName: String
-  }
+function getTransaction(id) {
+    return transactions.find((t) => t.id === id);
+}
 
-  type Message {
-    id: ID!
-    content: String
-    author: Author
-  }
+function getTransactions() {
+    return transactions
+}
 
-  type Author {
-    id: ID!
-    firstName: String
-    lastName: String
-  }
-  `;
-  
-  /**
-   * This defines a basic set of data for our Star Wars Schema.
-   *
-   * This data is hard coded for the sake of the demo, but you could imagine
-   * fetching this data from a backend service rather than from hardcoded
-   * JSON objects in a more complex demo.
-   */
-  
-  const messages = [
-    {
-        m_id: '1',
-        content: 'Test Message',
-        author: '1',
-    },
-    {
-        m_id: '2',
-        content: 'Test Message 2',
-        author: '1',
-    },
-    {
-        m_id: '3',
-        content: 'This is another test Message',
-        author: '2',
-    },
-    {
-        m_id: '4',
-        content: 'Test Message',
-        author: '1',
-    },
-  ];
-  
-  const messageData = {};
-  messages.forEach((message) => {
-    messageData[message.m_id] = message;
-  });
-  
-  const authors = [
-    {
-        a_id: '1',
-        firstName: 'Neo',
-        lastName: 'Cheung',
-    },
-    {
-        a_id: '2',
-        firstName: 'Jianing',
-        lastName: 'Li',
-    },
-    {
-        a_id: '3',
-        firstName: 'Lejing',
-        lastName: 'Huang',
-    },
-  ];
-  
-  const authorData = {};
-  authors.forEach((author) => {
-    authorData[author.a_id] = author;
-  });
+function getLocation(id) {
+    return locations.find((l) => l.id === id);
+}
+
+function getLocations() {
+    return locations;
+}
+
+function getCurrency(id) {
+    return currencies.find((c) => c.id === id)
+
+}
+
+function getCurrencies() {
+    return currencies;
+
+}
+
+function getWallet(id) {
+    return wallets.find((w) => w.id === id);
+
+}
+
+function getWallets() {
+    return wallets;
+}
 
 
+function getCurrentRate(currencyID, walletID) {
+    // TODO: get rate
+    return 1.0;
+}
+function createLocation(lat, lng, name) {
+    const location = {
+        id: uuid(),
+        lat: lat,
+        lng: lng,
+        name: name
+    };
+
+    locations.push(location);
+
+    return location;
+}
+
+function createUser(firstName, lastName, description) {
+    const user = {
+        firstName: firstName,
+        lastName: lastName,
+        description: description,
+        id: uuid(),
+        wallets: [],
+        friends: [],
+    };
+
+    users.push(user);
+
+    return user;
+}
 
 
-  function getMessages() {
+function createCurrency(abbreviation, symbol, country) {
+    const currency = {
+        id: uuid(),
+        abbreviation: abbreviation,
+        symbol: symbol,
+        country: country
+    };
+    currencies.push(currency);
 
-    return messageData;
-  }
-  
-  function getAuthors() {
-    return authorData;
-  }
-  
-  function getMessage(m_id) {
-    return messageData.map((msg) => {
-        return {
-            ...msg, author: getAuthor(msg.author)
-        }    
-    })
-  }
+    return currency
 
-  function getAuthor(a_id) {
-    return authorData[a_id];
-  }
-  
-  function createMessage(input) {
-    if (authorData.find(Author => Author.a_id === input.authorId) == null) {
-        throw new Error('no author exists with id ' + id);
-      }
-      // Create a random id for our "database".
-      var id = require('crypto').randomBytes(10).toString('hex');
-      var data = {};
-      data.content = input.content;
-      data.authorId = input.authorId;
-      messageData[id] = data;
-      return new Message(id, input);
-  }
+}
 
-  function createAuthor(input) {
-    // Create a random id for our "database".
-    var id = require('crypto').randomBytes(10).toString('hex');
+function createWallet(name, currencyID, userID) {
+    const wallet = {
+        id: uuid(),
+        name: name,
+        currency: currencyID,
+        transactions: [],
+        user: userID,
+    };
+    wallets.push(wallet);
 
-    var data = {};
-    data.firstName = input.firstName;
-    data.lastName = input.lastName;
-    authorData[id] = data;
-    return new Author(id, input);
-  }
+    return wallet;
+}
 
-  function updateMessage (id, input) {
-    if (!messageData[id]) {
-        throw new Error('no message exists with id ' + id);
-      }
-      // This replaces all old data, but some apps might want partial update.
-      messageData[id] = input;
-      return new Message(id, input);
-  }
+function createTransaction(amount, payerID, walletID, currencyID, description) {
+    const transaction = {
+        id: uuid(),
+        amount: amount,
+        rate: getCurrentRate(currencyID, walletID),
+        payer: payerID,
+        description: description,
+        location: createLocation(),
+        timestamp: Date.now().toString(),
+        walletID: walletID
+    };
 
-  function updateAuthor (id, input) {
-    if (!authorData[id]) {
-        throw new Error('no author exists with id ' + id);
-      }
-      // This replaces all old data, but some apps might want partial update.
-      authorData[id] = input;
-      return new Author(id, input);
-  }
+    transactions.push(transaction);
 
-  function deleteMessage (id) {
-    if (!messageData[id]) {
-        throw new Error('no message exists with id ' + id);
-      }
-      // This replaces all old data, but some apps might want partial update.
-      delete messageData[id];
-      return null;
-  }
+    return transaction;
+}
 
-  function deleteAuthor (id) {
-    if (!authorData[id]) {
-        throw new Error('no author exists with id ' + id);
-      }
-      // This replaces all old data, but some apps might want partial update.
-      delete authorData[id];
-      return null;
-  }
+function updateUser(id, firstName, lastName, description) {
+    let user = users.find((u) => u.id === id)
+    if (user == null){
 
+    }else{
+        if (firstName != null) user.firstName = firstName;
+        if (lastName != null) user.lastName = lastName;
+        if (description != null)user.description = description;
+    }
+    return user;
+}
 
+function updateTransaction(id, amount, payerID, description) {
+    let transaction = transactions.find((t) => t.id === id)
+    if (transaction == null){
 
-  
-  function toCursor(str) {
-    return Buffer("cursor" + str).toString('base64');
-  }
-  
-  function fromCursor(str) {
-    return Buffer.from(str, 'base64').toString().slice(6);
-  }
-  
-  const resolvers = {
+    }else{
+        if (amount != null) transaction.amount = amount;
+        if (payerID != null && users.find((u) => u.id === payerID) != null) transaction.payer = payerID;
+        if (description != null)transaction.description = description;
+    }
+    return transaction;
+}
+
+function updateLocation(id, lat, lng, name) {
+    let location = locations.find((l) => l.id === id)
+    if (location == null){
+
+    }else{
+        if (lat != null) location.lat = lat;
+        if (lng != null) location.lng = lng;
+        if (name != null) location.name = name;
+    }
+    return location;
+}
+
+function updateCurrency(id, abbreviation, symbol, country) {
+    let currency = currencies.find((c) => c.id === id)
+    if (currency == null){
+
+    }else{
+        if (abbreviation != null) currency.abbreviation = abbreviation;
+        if (symbol != null) currency.symbol = symbol;
+        if (country != null)currency.country = country;
+    }
+    return currency;
+}
+
+function updateWallet(id, name) {
+    let wallet = wallets.find((w) => w.id === id)
+    if (wallet == null){
+
+    }else{
+        if (name != null) wallet.name = name;
+    }
+    return wallet;
+}
+
+function deleteUser(id) {
+    let user = users.find((u) => u.id === id);
+    if (user == null){
+
+    }else{
+        users = users.filter(function(value, index, arr){
+            return value.id != id;
+        })
+    }
+    return user;
+}
+
+function deleteTransaction(id) {
+    let transaction = transactions.find((t) => t.id === id);
+    if (transaction == null){
+
+    }else{
+        transactions = transactions.filter(function(value, index, arr){
+            return value.id != id;
+        })
+    }
+    return transaction;
+}
+
+function deleteLocation(id) {
+    let location = locations.find((l) => l.id === id);
+    if (location == null){
+
+    }else{
+        locations = locations.filter(function(value, index, arr){
+            return value.id != id;
+        })
+    }
+    return location;
+}
+
+function deleteCurrency(id) {
+    let currency = currencies.find((c) => c.id === id);
+    if (currency == null){
+
+    }else{
+        currencies = currencies.filter(function(value, index, arr){
+            return value.id != id;
+        })
+    }
+    return currency;
+}
+
+function deleteWallet(id) {
+    let wallet = wallets.find((c) => c.id === id);
+    if (wallet == null){
+
+    }else{
+        wallets = wallets.filter(function(value, index, arr){
+            return value.id != id;
+        })
+    }
+    return wallet;
+}
+
+function calculateBalance(wallet) {
+    return 0;
+}
+
+const resolvers = {
     Query: {
-      messages: (root) => getMessages(),
-      authors: (root) => getAuthors(),
-      getMessage: (root, { m_id }) => getMessage(m_id),
-      getAuthor: (root, { a_id }) => getAuthor(a_id),
+        getUser: (root, { userID }) => {
+            return getUser(userID);
+
+        },
+        getTransaction: (root, { transactionID }) => {
+            return getTransaction(transactionID);
+
+        },
+        getLocation: (root, { locationID }) => {
+            return getLocation(locationID);
+        },
+        getCurrency: (root, { currencyID }) => {
+            return getCurrency(currencyID);
+        },
+        getWallet: (root, { walletID }) => {
+            return getWallet(walletID);
+        },
+        getUsers: () => {
+            return getUsers();
+        },
+        getWallets: () => {
+            return getWallets();
+        },
+        getTransactions: () => {
+            return getTransactions();
+        },
+        getLocations: () => {
+            return getLocations();
+        },
+        getCurrencies: () => {
+            return getCurrencies();
+        },
+        /*
+        hero: (root, { episode }) => getHero(episode),
+        character: (root, { id }) => getCharacter(id),
+        human: (root, { id }) => getHuman(id),
+        droid: (root, { id }) => getDroid(id),
+        starship: (root, { id }) => getStarship(id),
+        reviews: (root, { episode }) => getReviews(episode),
+        search: (root, { text }) => {
+            const re = new RegExp(text, 'i');
+
+            const allData = [
+                ...humans,
+                ...droids,
+                ...starships,
+            ];
+
+            return allData.filter((obj) => re.test(obj.name));
+        },
+        */
     },
     Mutation: {
-      createMessage: (root, { messageInput }) => createMessage(messageInput),
-      createAuthor: (root, { authorInput }) => createAuthor(authorInput),
-      updateMessage: (root, { id, messageInput }) => updateMessage(id, messageInput),
-      updateAuthor: (root, { id, authorInput }) => updateAuthor(id, authorInput),
-      deleteMessage: (root, { id }) => deleteMessage(id),
-      deleteAuthor: (root, { id }) => deleteAuthor(id),
+        /*
+        createReview: (root, { episode, review }) => {
+            reviews[episode].push(review);
+            review.episode = episode;
+            pubsub.publish(ADDED_REVIEW_TOPIC, { reviewAdded: review });
+            return review;
+        },
+        */
+
+        createUser: (root, { firstName, lastName, description }) => {
+            return createUser(firstName, lastName, description);
+        },
+
+        createTransaction: (root, { amount, payerID, walletID, currencyID, description }) => {
+            return createTransaction(amount, payerID, walletID, currencyID, description);
+        },
+        createLocation: (root, { lat, lng, name }) => {
+            return createLocation(lat, lng, name);
+        },
+        createCurrency: (root, { abbreviation, symbol, country }) => {
+            return createCurrency(abbreviation, symbol, country);
+        },
+        createWallet: (root, {name, currencyID, userID }) => {
+            return createWallet(name, currencyID, userID);
+        },
+
+        updateUser: (root, {userID, firstName, lastName, description }) => {
+            return updateUser(userID, firstName, lastName, description);
+        },
+        updateTransaction: (root, {transactionID, amount, payerID, description}) => {
+            return updateTransaction(transactionID, amount, payerID, description);
+
+        },
+        updateLocation: (root, {locationID, lat, lng, name}) => {
+            return updateLocation(locationID, lat, lng, name);
+        },
+        updateCurrency: (root, {currencyID, abbreviation, symbol, country}) => {
+            return updateCurrency(currencyID, abbreviation, symbol, country);
+        },
+        updateWallet: (root, {walletID, name}) => {
+            return updateWallet(walletID, name);
+        },
+
+        deleteUser: (root, {userID}) => {
+            return deleteUser(userID);
+        },
+        deleteTransaction: (root, {transactionID}) => {
+            return deleteTransaction(transactionID);
+        },
+        deleteLocation: (root, {locationID}) => {
+            return deleteLocation(locationID);
+        },
+        deleteCurrency: (root, {currencyID}) => {
+            return deleteCurrency(currencyID);
+        },
+        deleteWallet: (root, {walletID}) => {
+            return deleteWallet(walletID);
+        },
+
     },
+    /*
     Subscription: {
-      
+        reviewAdded: {
+            subscribe: withFilter(
+                () => pubsub.asyncIterator(ADDED_REVIEW_TOPIC),
+                (payload, variables) => {
+                    return (payload !== undefined) &&
+                        ((variables.episode === undefined) || (payload.reviewAdded.episode === variables.episode));
+                }
+            ),
+        },
     },
+    */
+    User: {
+        friends: (root) => {
+            return root.friends.map((userID) => getUser(userID));
+        },
+        wallets: (root) => {
+            return root.wallets.map((walletID) => getWallet(walletID));
+        }
+    },
+    
+    Wallet: {
+        currency: (root) => {
+            return getCurrency(root.currency);
+        },
+        transactions: (root) => {
+            return root.transactions.map((id) => {
+                return getTransaction(id);
+            })
+        },
+        user: (root) => {
+            return getUser(root.user);
+        },
+        balance: (root) => {
+            return calculateBalance(root);
+        }
+    },
+    Transaction: {
+        payer: (root) => {
+            return getUser(root.payer);
+        },
+        location: (root) => {
+            return getLocation(root.location);
+        },
+        wallet: (root) => {
+            return getWallet(root.walletID);
+        }
+    },
+    Currency: {
+        rate: getCurrentRate
+    }
+}
 
-
-
-  }
-  
-  /**
-   * Finally, we construct our schema (whose starting query type is the query
-   * type we defined above) and export it.
-   */
-  export const StarWarsSchema = makeExecutableSchema({
+/**
+ * Finally, we construct our schema (whose starting query type is the query
+ * type we defined above) and export it.
+ */
+const walletSchema = makeExecutableSchema({
     typeDefs: [schemaString],
     resolvers
-  });
-  
+});
 
-
-
+export default walletSchema;

@@ -1,0 +1,12 @@
+{
+    "object_senquence": [
+        "User",
+        "Transaction",
+        "Currency",
+        "Location",
+        "Wallet"
+    ],
+    "unsolved_objects": [
+        0
+    ]
+}
