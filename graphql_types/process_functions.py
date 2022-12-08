@@ -89,9 +89,13 @@ class FunctionBuilder:
         datatype_list: previous datatype list for which are already processed. It will not return any function name with any dependent datatype for any variable not found in this list.
         """
         function_list = {}
+        # we check for each functions in the query function list
         for function_name, function_body in self.query_datatype_mappings.items():
+            # if function_body["inputDatatype"] is None, it usually means that the function does not need any input and it is fully independent. Thus we will just output the function name directly.
             if function_body["inputDatatype"] != None:
+                # else we have to add the current datatype to the list first.
                 datatype_list.append(current_datatype)
+                # we will then recursively search for dependency 
                 checker = self._get_inner_mapping_by_input_datatype(current_datatype, datatype_list, function_body["inputDatatype"])
                 if checker:
                     function_list[function_name] = function_body
@@ -134,6 +138,7 @@ class FunctionBuilder:
         return function_list
         '''
 
+    # Search in the input and check for dependency. For input objects it will expand it and search recursively.
     def _get_inner_mapping_by_input_datatype(self, current_datatype, datatype_list, datatype_mapping_json):
         if current_datatype == None:
             checker = True
@@ -397,6 +402,13 @@ class FunctionBuilder:
 
     # update function type based on user modified yaml file
     def update_function_type(self, path):
+        """
+        Read the 'function - function_type' mapping file and update schema based on the file.
+
+        Parameters
+        ----------
+        path: location and name to read the file from.
+        """
         f = open(path, 'r')
         input_json = yaml.load(f.read())
         for function_name, function_type in input_json.items():
@@ -405,6 +417,13 @@ class FunctionBuilder:
 
     # load the query parameter file and update existing schema to match user input
     def read_query_parameter_list(self, path):
+        """
+        Read the 'input/output - datatype_object' mapping file for query functions and update schema based on the file.
+
+        Parameters
+        ----------
+        path: location and name to read the file from.
+        """
         f = open(path, 'r')
         input_json = yaml.load(f.read())
         for function_name, function_body in input_json.items():
@@ -415,6 +434,13 @@ class FunctionBuilder:
     
     # load the mutation parameter file and update existing schema to match user input
     def read_mutation_parameter_list(self, path):
+        """
+        Read the 'input/output - datatype_object' mapping file for mutation functions and update schema based on the file.
+
+        Parameters
+        ----------
+        path: location and name to read the file from.
+        """
         f = open(path, 'r')
         input_json = yaml.load(f.read())
         for function_name, function_body in input_json.items():
