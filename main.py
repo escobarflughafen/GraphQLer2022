@@ -95,7 +95,7 @@ if __name__ == '__main__':
 
         function_builder = FunctionBuilder(
             os.path.join(args.save, schema_file_name))
-        function_builder.generate_grammer_file(args.save)
+        function_builder.generate_grammar_file(args.save)
         
 
     elif args.mode == 'fuzzing':
