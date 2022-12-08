@@ -1,7 +1,6 @@
 import argparse
 import os
 import introspection.parse as parse
-from introspection.object_dependency import ObjectSequenceBuilder
 import json
 from request import request
 from pprint import pprint

@@ -1,18 +1,11 @@
-from process_functions import FunctionBuilder
-import json 
-from pprint import pprint
+from graphql_types.process_functions import FunctionBuilder
 
+class SequenceBuilder:
+    def __init__(self, object_sequence, function_builder: FunctionBuilder):
+        #schema_json = schema
+        self.object_sequence = object_sequence
 
-class Requester:
-    def __init__(self, SCHEMAFILE, OBJECTSEQFILE):
-        # Read files.
-        schema_file = open(SCHEMAFILE, "r")
-        schema_json = json.load(schema_file)
-
-        object_sequence_file = open(OBJECTSEQFILE, "r")
-        self.object_sequence = json.load(object_sequence_file)["object_senquence"]
-
-        self.fb = FunctionBuilder(schema_json, query_parameter_file_path="introspection/function_input.txt", mutation_parameter_file_path="introspection/function_mutation_input.txt")
+        self.fb = function_builder
         self.processed_objects = []
         self.request_sequence = []
         self.object_stack = []
@@ -47,7 +40,7 @@ class Requester:
                     self.processed_objects.append(ob) 
 
 
-    def build_request_sequence(self, OUTPUTFILE):
+    def build_request_sequence(self, OUTPUTFILE=None):
         for ob in self.object_sequence:
             # Add current object to the stack.
             self.object_stack.append(ob)
@@ -71,17 +64,21 @@ class Requester:
             candidateFunc = self.fb.get_mutation_mapping_by_input_datatype(ob)
             self.function_checking(candidateFunc, "DELETE", ob)
 
-        self.generate_request_sequence(OUTPUTFILE)
+        return self.generate_request_sequence(OUTPUTFILE)
 
 
-    def generate_request_sequence(self, OUTPUTFILE):
-        f = open(OUTPUTFILE, 'w')
-        for x in self.request_sequence:
-            f.writelines(x + "\n")
-        f.close()
+    def generate_request_sequence(self, OUTPUTFILE=None):
+        if OUTPUTFILE:
+            f = open(OUTPUTFILE, 'w')
+            for x in self.request_sequence:
+                f.writelines(x + "\n")
+            f.close()
+        
+        return self.request_sequence
+        
 
-
-SCHEMAFILE = "neogeek_compiled.json"
-OBJECTSEQFILE = "object_sequence.json"
-r = Requester(SCHEMAFILE, OBJECTSEQFILE)
-r.build_request_sequence("neogeek_request_sequence.txt")
+if __name__ == '__main__':
+    SCHEMAFILE = "neogeek_compiled.json"
+    OBJECTSEQFILE = "object_sequence.json"
+    r = SequenceBuilder(SCHEMAFILE, OBJECTSEQFILE)
+    r.build_request_sequence()

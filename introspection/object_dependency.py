@@ -97,7 +97,7 @@ class ObjectSequenceBuilder:
             self.unsolved_object.append(self.object_queue.get())
         
         # TODO: User input path output file path.
-        self.generate_object_sequence_file("./object_sequence.json")
+        # self.generate_object_sequence_file("./object_sequence.json")
         
         # Test remove later
         return (self.object_sequence, self.unsolved_object)
@@ -117,5 +117,6 @@ class ObjectSequenceBuilder:
         f.close()
 
 
-obsb = ObjectSequenceBuilder(SCHEMAPATH)
-object_sequence, unsolved_objects = obsb.build_sequence()
+if __name__ == '__main__':
+    obsb = ObjectSequenceBuilder(SCHEMAPATH)
+    object_sequence, unsolved_objects = obsb.build_sequence()

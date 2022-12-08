@@ -1,6 +1,0 @@
-createMessage	Create
-createAuthor	Create
-updateMessage	Update
-updateAuthor	Update
-deleteMessage	Delete
-deleteAuthor	Delete
