@@ -190,6 +190,7 @@ def build_datatype(introspection_json):
     input_objects = {}
 
     # Get query type name
+    
     query_type_name = introspection_json["data"]["__schema"]["queryType"]["name"]
 
     # Get mutation type name

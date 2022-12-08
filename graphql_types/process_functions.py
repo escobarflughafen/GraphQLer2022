@@ -359,10 +359,12 @@ class FunctionBuilder:
     def _build_inner_input_datatype_call_schema(self, input_object_name, datatype_mapping):
         output_json = self.input_objects[input_object_name]["fields"]
         for arg_name, arg_body in self.input_objects[input_object_name]["fields"].items():
+            if arg_body["kind"] == "LIST":
+                output_json[arg_name]["ofType"]["args"] = self._build_inner_input_datatype_call_schema(arg_body["ofType"]["name"], datatype_mapping[arg_name])
             if arg_body["kind"] == "INPUT_OBJECT":
-                output_json[arg_name] = self._build_inner_input_datatype_call_schema(arg_body["name"], datatype_mapping["arg_name"])
+                output_json[arg_name]["args"] = self._build_inner_input_datatype_call_schema(arg_body["name"], datatype_mapping[arg_name])
             else:
-                output_json[arg_name]["ofDatatype"] = datatype_mapping["arg_name"]
+                output_json[arg_name]["ofDatatype"] = datatype_mapping[arg_name]
         return output_json
 
 

@@ -1,5 +1,10 @@
 from graphql_types import datatype
 
+def get_type(type):
+        if type["name"] == None:
+            return get_type(type["ofType"])
+        else:
+            return type
 
 class Callable(datatype.Datatype):
     """
@@ -25,8 +30,9 @@ class Callable(datatype.Datatype):
             for field in fields:
                 if fields[field]["kind"] == "INPUT_OBJECT":
                     processed_input_object[field] = process_input_object(
-                        all_input_objects[fields[field]["name"]])
+                        all_input_objects[fields[field]["name"]], all_input_objects)
                 else:
+                    # TODO: check INPUT_OBJECT 120822
                     processed_input_object[field] = [None, fields[field]["name"]]
 
             return processed_input_object
@@ -40,7 +46,7 @@ class Callable(datatype.Datatype):
             for arg in args:
                 if args[arg]["kind"] == "INPUT_OBJECT":
                     prepared_args[arg] = process_input_object(
-                        all_input_objects[args[arg]["name"]])
+                        all_input_objects[args[arg]["name"]], all_input_objects)
                 elif args[arg]["kind"] == "LIST":
                     prepared_args[arg]=[[None, args[arg]["name"]]]
                 elif args[arg]["name"] == 'ID':
@@ -57,6 +63,9 @@ class Callable(datatype.Datatype):
             '''
             prepared_return_fields={}
 
+            def traverse_list():
+                pass
+
             def traverse_fields(prepared_return_fields, fields, all_objects, max_depth):
                 if max_depth == 0:
                     return
@@ -70,13 +79,20 @@ class Callable(datatype.Datatype):
                         traverse_fields(
                             child_obj_query_fields, child_obj_fields, all_objects, max_depth-1)
 
+                    
                     elif fields[field]["kind"] == 'LIST':
-                        child_obj = all_objects[fields[field]
+                        # TODO: Process SCALAR & ENUMS
+                        # TODO: Recursively resolve lists
+                        of_type = get_type(fields[field]["ofType"])
+                        if of_type == 'OBJECT':                            
+                            child_obj = all_objects[fields[field]
                                                 ["ofType"]["name"]]
-                        child_obj_query_fields = {}
-                        prepared_return_fields[field] = child_obj_query_fields
-                        traverse_fields(
-                            child_obj_query_fields, child_obj["fields"], all_objects, max_depth-1)
+                            child_obj_query_fields = {}
+                            prepared_return_fields[field] = child_obj_query_fields
+                            traverse_fields(
+                                child_obj_query_fields, child_obj["fields"], all_objects, max_depth-1)
+                        else:
+                            prepared_return_fields[field] = True
 
                     elif fields[field]["kind"] == 'INTERFACE':
                         pass

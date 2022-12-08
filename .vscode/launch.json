@@ -1,13 +1,23 @@
 {
     "version": "0.2.0",
     "configurations": [
-
-
-
-
-
-
-
+        
+        {
+            "name": "Python: Fuzzing Suomi",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/main.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "--mode",
+                "fuzzing",
+                "-u",
+                "https://api.digitransit.fi/routing/v1/routers/finland/index/graphql",
+                "--schema",
+                "./debug"
+            ]
+        },
         {
             "name": "Python: Test Shopify Schema",
             "type": "python",
@@ -17,13 +27,11 @@
             "justMyCode": true,
             "args": [
                 "--mode",
-                "debug",
-                "-i",
-                "./introspection/schemas/shopify.json",
-                /*
+                "compile",
                 "-u",
-                "http://neogeek.io:4000/graphql",
-                */
+                "https://api.digitransit.fi/routing/v1/routers/finland/index/graphql",
+                "--save",
+                "./debug"
             ]
         },
         {
