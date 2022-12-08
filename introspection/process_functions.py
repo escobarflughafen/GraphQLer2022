@@ -292,7 +292,7 @@ class FunctionBuilder:
         return
 
     # combined function for the process control. Generate 1-3 files depending on the existance of quiries and mutations
-    def generate_grammer_file(self, path):
+    def generate_grammar_file(self, path):
         if self.schema_json.get("queries") != None:
             self.print_query_parameter_list(os.path.join(path, "query_parameter_list.yml"))
         if self.schema_json.get("mutations") != None:
@@ -606,7 +606,7 @@ class FunctionBuilder:
 
 '''
 test = FunctionBuilder("shopify_compiled.json")
-test.generate_grammer_file()
+test.generate_grammar_file()
 
 test = FunctionBuilder("schema_wallet.json", query_parameter_file_path="function_input.txt", mutation_parameter_file_path="function_mutation_input.txt")
 test1 = test.get_query_mappings()

@@ -312,7 +312,7 @@ def generate_grammar_file(path, objects, input_objects, queries, mutations, type
 
     f = open(path, 'w')
 
-    grammer = {
+    grammar = {
         "objects": objects,
         "inputObjects": input_objects,
         "queries": queries,
@@ -320,9 +320,9 @@ def generate_grammar_file(path, objects, input_objects, queries, mutations, type
     }
 
     if type == "yaml":
-        yaml.dump(grammer, f)
+        yaml.dump(grammar, f)
     elif type == "json":
-        json.dump(grammer, f)
+        json.dump(grammar, f)
 
     f.close()
 

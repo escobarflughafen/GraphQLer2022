@@ -6,10 +6,39 @@ import pprint
 
 
 class FunctionBuilder:
+    """
+    The class for 'function - input/output - datatype_object' mapping.
+
+    Attributes
+    ----------
+    schema_json_file_path: the processed schema json file to be imported. This is mandatory.
+    function_list_file_path: the 'function - function_type' mapping file to be imported. If the file is provided, the 'function - function_type' mapping will be updated based on the file.
+    query_parameter_file_path: the 'input/output - datatype_object' mapping for query functions. If the file is provided, the 'input/output - datatype_object' mapping will be updated based on the file.
+    mutation_parameter_file_path: the 'input/output - datatype_object' mapping for mutation functions. If the file is provided, the 'input/output - datatype_object' mapping will be updated based on the file.
+
+    Methods
+    -------
+    get_query_mapping_by_input_datatype(self, current_datatype = None, datatype_list = [])
+        Return all query functions with at least 1 input parameters associated with current datatype and meet all dependency requirements.
+    get_mutation_mapping_by_input_datatype(self, current_datatype = None, datatype_list = [])
+        Return all mutation functions with at least 1 input parameters associated with current datatype and meet all dependency requirements.
+    get_query_mapping_by_output_datatype(self, current_datatype, explicit = False):
+        Return all query functions with output object associated with current datatype and meet all dependency requirements.
+    get_mutation_mapping_by_output_datatype(self, current_datatype, explicit = False):
+        Return all mutation functions with output object associated with current datatype and meet all dependency requirements.
+    """
 
     # during the first call, usually we only provide schema json file and there will be 3 files generated for user to fix
     # next call we will load original schema with 3 modified files and the datatype will be overwrited during the initialication
     def __init__(self, schema_json_file_path, function_list_file_path = None, query_parameter_file_path = None, mutation_parameter_file_path = None):
+        """
+        Parameters
+        ----------
+        schema_json_file_path: the processed schema json file to be imported. This is mandatory.
+        function_list_file_path: the 'function - function_type' mapping file to be imported. If the file is provided, the 'function - function_type' mapping will be updated based on the file.
+        query_parameter_file_path: the 'input/output - datatype_object' mapping for query functions. If the file is provided, the 'input/output - datatype_object' mapping will be updated based on the file.
+        mutation_parameter_file_path: the 'input/output - datatype_object' mapping for mutation functions. If the file is provided, the 'input/output - datatype_object' mapping will be updated based on the file.
+        """
         f = open(schema_json_file_path, "r")
         schema_json = json.load(f)
         f.close()
@@ -49,10 +78,16 @@ class FunctionBuilder:
     # current datatype, and all other parameters must associated with current or previous
     # processed datatypes. This is to figure out which function to be added into the 
     # fuzzing list.
+
     def get_query_mapping_by_input_datatype(self, current_datatype = None, datatype_list = []):
-        '''
-        Return all functions with at least 1 input parameters associated with current datatype.
-        '''
+        """
+        Return all query functions with at least 1 input parameters associated with current datatype and meet all dependency requirements.
+
+        Parameters
+        ----------
+        current_datatype: current datatype to be mapped with. 'None' by default and it will return all functions with independent input.
+        datatype_list: previous datatype list for which are already processed. It will not return any function name with any dependent datatype for any variable not found in this list.
+        """
         function_list = {}
         for function_name, function_body in self.query_datatype_mappings.items():
             if function_body["inputDatatype"] != None:
@@ -132,6 +167,14 @@ class FunctionBuilder:
     # processed datatypes. This is to figure out which function to be added into the 
     # fuzzing list.
     def get_mutation_mapping_by_input_datatype(self, current_datatype = None, datatype_list = []):
+        """
+        Return all mutation functions with at least 1 input parameters associated with current datatype and meet all dependency requirements.
+
+        Parameters
+        ----------
+        current_datatype: current datatype to be mapped with. 'None' by default and it will return all functions with independent input.
+        datatype_list: previous datatype list for which are already processed. It will not return any function name with any dependent datatype for any variable not found in this list.
+        """
         function_list = {}
         for function_name, function_body in self.mutation_datatype_mappings.items():
             if function_body["inputDatatype"] != None:
@@ -190,6 +233,14 @@ class FunctionBuilder:
     # output datatype. Since there can be only 1 output datatype, there's no need 
     # to check previous processed datatypes.
     def get_query_mapping_by_output_datatype(self, current_datatype, explicit = False):
+        """
+        Return all query functions with output object associated with current datatype and meet all dependency requirements.
+
+        Parameters
+        ----------
+        current_datatype: current datatype to be mapped with. 'None' by default and it will return all functions with independent input.
+        explicit: If this set to True, it will check every child object even without 'nonNull' parameter. It is 'False' by default to only check for 'nonNull' child objects.
+        """
         function_list = {}
         for function_name, function_body in self.query_datatype_mappings.items():
             if function_body["outputDatatype"]["name"] == current_datatype:
@@ -205,6 +256,14 @@ class FunctionBuilder:
     # output datatype. Since there can be only 1 output datatype, there's no need 
     # to check previous processed datatypes.
     def get_mutation_mapping_by_output_datatype(self, current_datatype, explicit = False):
+        """
+        Return all mutation functions with output object associated with current datatype and meet all dependency requirements.
+
+        Parameters
+        ----------
+        current_datatype: current datatype to be mapped with. 'None' by default and it will return all functions with independent input.
+        explicit: If this set to True, it will check every child object even without 'nonNull' parameter. It is 'False' by default to only check for 'nonNull' child objects.
+        """
         function_list = {}
         for function_name, function_body in self.mutation_datatype_mappings.items():
             if function_body["outputDatatype"]["name"] == current_datatype:
@@ -250,6 +309,14 @@ class FunctionBuilder:
 
     # generate a file with automatically generated function type to let user modify later
     def print_function_list(self, path):
+        """
+        !for debug only, please call 'generate_grammar_file' for production
+        Generate 'function - function_type' mapping file.
+
+        Parameters
+        ----------
+        path: location and name to save the file to.
+        """
         f = open(path, 'w')
         output_json = {}
         for function_name, function_body in self.mutation_datatype_mappings.items():
@@ -260,6 +327,14 @@ class FunctionBuilder:
 
     # generate a file with generated parameter type for query types to let user modify later
     def print_query_parameter_list(self, path):
+        """
+        !for debug only, please call 'generate_grammar_file' for production
+        Generate 'input/output - datatype_object' mapping file for query functions.
+
+        Parameters
+        ----------
+        path: location and name to save the file to.
+        """
         f = open(path, 'w')
         output_json = {}
         for function_name, function_body in self.query_datatype_mappings.items():
@@ -277,6 +352,14 @@ class FunctionBuilder:
 
     # generate a file with generated parameter type for mutation types to let user modify later
     def print_mutation_parameter_list(self, path):
+        """
+        !for debug only, please call 'generate_grammar_file' for production
+        Generate 'input/output - datatype_object' mapping file for mutation functions.
+
+        Parameters
+        ----------
+        path: location and name to save the file to.
+        """
         f = open(path, 'w')
         output_json = {}
         for function_name, function_body in self.mutation_datatype_mappings.items():
@@ -293,12 +376,24 @@ class FunctionBuilder:
         return
 
     # combined function for the process control. Generate 1-3 files depending on the existance of quiries and mutations
-    def generate_grammer_file(self, path):
+    def generate_grammar_file(self, path):
+        """
+        Generate grammar file for user to modify if needed.
+        It will generate 1-3 yaml files based on the existance of query and mutation group of the GraphQL API.
+        mutation_function_list.yml: 'function - function_type' mapping file for mutation functions.
+        query_parameter_list.yml: 'input/output - datatype_object' mapping file for query functions.
+        mutation_parameter_list.yml: 'input/output - datatype_object' mapping file for mutation functions.
+
+        Parameters
+        ----------
+        path: location to save the file to. The file name is fixed and no need to specify.
+        """
         if self.schema_json.get("queries") != None:
             self.print_query_parameter_list(os.path.join(path, "query_parameter_list.yml"))
         if self.schema_json.get("mutations") != None:
             self.print_function_list(os.path.join(path, "mutation_function_list.yml"))
             self.print_mutation_parameter_list(os.path.join(path, "mutation_parameter_list.yml"))
+
 
     # update function type based on user modified yaml file
     def update_function_type(self, path):
@@ -606,10 +701,9 @@ class FunctionBuilder:
         else:
             return None
 
-
 '''
 test = FunctionBuilder("shopify_compiled.json")
-test.generate_grammer_file()
+test.generate_grammar_file()
 
 test = FunctionBuilder("schema_wallet.json", query_parameter_file_path="function_input.txt", mutation_parameter_file_path="function_mutation_input.txt")
 test1 = test.get_query_mappings()
