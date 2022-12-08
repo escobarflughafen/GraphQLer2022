@@ -35,7 +35,7 @@ class Callable(datatype.Datatype):
             
             prepared_args = {}
             if not args:
-                return None
+                return {}
 
             for arg in args:
                 if args[arg]["kind"] == "INPUT_OBJECT":

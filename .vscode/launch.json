@@ -4,6 +4,10 @@
 
 
 
+
+
+
+
         {
             "name": "Python: Test Shopify Schema",
             "type": "python",
@@ -47,9 +51,9 @@
                 "--mode",
                 "fuzzing",
                 "--schema",
-                "./rickmorty",
+                "./debug2",
                 "-u",
-                "https://rickandmortyapi.com/graphql"
+                "http://neogeek.io:4001/graphql"
             ]
         }
     ],

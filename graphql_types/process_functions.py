@@ -49,18 +49,27 @@ class FunctionBuilder:
     # processed datatypes. This is to figure out which function to be added into the 
     # fuzzing list.
     def get_query_mapping_by_input_datatype(self, current_datatype = None, datatype_list = []):
+        '''
+        Return all functions with at least 1 input parameters associated with current datatype.
+        '''
         function_list = {}
+        for function_name, function_body in self.query_datatype_mappings.items():
+            if function_body["inputDatatype"] != None:
+                datatype_list.append(current_datatype)
+                checker = self._get_inner_mapping_by_input_datatype(current_datatype, datatype_list, function_body["inputDatatype"])
+                if checker:
+                    function_list[function_name] = function_body
+            else:
+                function_list[function_name] = function_body
+        return function_list
+        '''
         if current_datatype == None:
             # Sometimes we will need to get all functions that have independent input datas
             # such as scalar only type or no input. In this case we will return all functions
             # without any datatype dependency. Note that this can be true independent function,
             # or because of failed to check datatype dependency for the input names.
-            for function_name, function_body in self.mutation_datatype_mappings.items():
-                checker = True
-                if function_body["inputDatatype"] != None:
-                    for input_name, input_body in function_body["inputDatatype"].items():
-                        if input_body != None:
-                            checker = False
+            for function_name, function_body in self.query_datatype_mappings.items():
+                checker = self._get_inner_mapping_by_input_datatype(current_datatype, datatype_list, function_body["inputDatatype"])
                 if checker:
                     function_list[function_name] = function_body
         else:
@@ -87,6 +96,33 @@ class FunctionBuilder:
                 if checker:
                     function_list[function_name] = function_body
         return function_list
+        '''
+
+    def _get_inner_mapping_by_input_datatype(self, current_datatype, datatype_list, datatype_mapping_json):
+        if current_datatype == None:
+            checker = True
+            for input_name, input_body in datatype_mapping_json.items():
+                if isinstance(input_body, dict):
+                    checker = self._get_inner_mapping_by_input_datatype(current_datatype, datatype_list, input_body)
+                else:
+                    if input_body != None:
+                        checker = False
+        else:
+            checker = False
+            for input_name, input_body in datatype_mapping_json.items():
+                if (not isinstance(input_body, dict)) and input_body == current_datatype:
+                    checker = True
+            if checker:
+                for input_name, input_body in datatype_mapping_json.items():
+                    if isinstance(input_body, dict):
+                        checker = self._get_inner_mapping_by_input_datatype(current_datatype, datatype_list, input_body)
+                if checker:
+                    for input_name, input_body in datatype_mapping_json.items():
+                        if (not isinstance(input_body, dict)) and (input_body not in datatype_list) and input_body != None:
+                            checker = False
+            return checker
+                    
+
 
 
     # given current datatype and all previously processed datatype list, this function
@@ -95,6 +131,18 @@ class FunctionBuilder:
     # processed datatypes. This is to figure out which function to be added into the 
     # fuzzing list.
     def get_mutation_mapping_by_input_datatype(self, current_datatype = None, datatype_list = []):
+        function_list = {}
+        for function_name, function_body in self.mutation_datatype_mappings.items():
+            if function_body["inputDatatype"] != None:
+                datatype_list.append(current_datatype)
+                checker = self._get_inner_mapping_by_input_datatype(current_datatype, datatype_list, function_body["inputDatatype"])
+                if checker:
+                    function_list[function_name] = function_body
+            else:
+                function_list[function_name] = function_body
+        return function_list
+
+        '''
         function_list = {}
         if current_datatype == None:
             # Sometimes we will need to get all functions that have independent input datas
@@ -133,6 +181,7 @@ class FunctionBuilder:
                 if checker:
                     function_list[function_name] = function_body
         return function_list
+        '''
 
 
 
@@ -198,6 +247,7 @@ class FunctionBuilder:
     def get_mutation_mapping(self, mutation_name):
         return self.mutation_datatype_mappings[mutation_name]
 
+    # generate a file with automatically generated function type to let user modify later
     def print_function_list(self, path):
         f = open(path, 'w')
         output_json = {}
@@ -207,6 +257,7 @@ class FunctionBuilder:
         f.close()
         return
 
+    # generate a file with generated parameter type for query types to let user modify later
     def print_query_parameter_list(self, path):
         f = open(path, 'w')
         output_json = {}
@@ -223,6 +274,7 @@ class FunctionBuilder:
         f.close()
         return
 
+    # generate a file with generated parameter type for mutation types to let user modify later
     def print_mutation_parameter_list(self, path):
         f = open(path, 'w')
         output_json = {}
@@ -239,6 +291,7 @@ class FunctionBuilder:
         f.close()
         return
 
+    # combined function for the process control. Generate 1-3 files depending on the existance of quiries and mutations
     def generate_grammer_file(self, path):
         if self.schema_json.get("queries") != None:
             self.print_query_parameter_list(os.path.join(path, "query_parameter_list.yml"))
@@ -251,9 +304,10 @@ class FunctionBuilder:
         f = open(path, 'r')
         input_json = yaml.load(f.read())
         for function_name, function_type in input_json.items():
-                self.mutation_datatype_mappings[function_name]['functionType'] = function_type
+                self.mutation_datatype_mappings[function_name]["functionType"] = function_type
         return
 
+    # load the query parameter file and update existing schema to match user input
     def read_query_parameter_list(self, path):
         f = open(path, 'r')
         input_json = yaml.load(f.read())
@@ -263,6 +317,7 @@ class FunctionBuilder:
         f.close()
         return
     
+    # load the mutation parameter file and update existing schema to match user input
     def read_mutation_parameter_list(self, path):
         f = open(path, 'r')
         input_json = yaml.load(f.read())
@@ -272,22 +327,44 @@ class FunctionBuilder:
         f.close()
         return
 
+    # given function type and function name, this function returns the json structure with ofDatatype parameter for the use of function call later
     def build_function_call_schema(self, function_type, function_name):
         output_json = {}
         if function_type == "query":
             output_json[function_name] = self.query_datatype_mappings[function_name]["rawdata"]
             output_json[function_name]["type"]["ofDatatype"] = self.query_datatype_mappings[function_name]["outputDatatype"]["name"]
-            for arg_name, arg_body in self.query_datatype_mappings[function_name]["rawdata"]["args"].items():
-                output_json[function_name]["args"][arg_name]["ofDatatype"] = self.query_datatype_mappings[function_name]["inputDatatype"][arg_name]
+            if self.query_datatype_mappings[function_name]["rawdata"]["args"] != None:
+                for arg_name, arg_body in self.query_datatype_mappings[function_name]["rawdata"]["args"].items():
+                    if arg_body["kind"] == "INPUT_OBJECT":
+                        output_json[function_name]["args"][arg_name]["args"] = self._build_inner_input_datatype_call_schema(arg_body["name"], self.query_datatype_mappings[function_name]["inputDatatype"][arg_name])
+                    else:
+                        output_json[function_name]["args"][arg_name]["ofDatatype"] = self.query_datatype_mappings[function_name]["inputDatatype"][arg_name]
+            else:
+                output_json[function_name]["args"] = {}
         elif function_type == "mutation":
             output_json[function_name] = self.mutation_datatype_mappings[function_name]["rawdata"]
             output_json[function_name]["functionType"] = self.mutation_datatype_mappings[function_name]["functionType"]
             output_json[function_name]["type"]["ofDatatype"] = self.mutation_datatype_mappings[function_name]["outputDatatype"]["name"]
-            for arg_name, arg_body in self.mutation_datatype_mappings[function_name]["rawdata"]["args"].items():
-                output_json[function_name]["args"][arg_name]["ofDatatype"] = self.mutation_datatype_mappings[function_name]["inputDatatype"][arg_name]
+            if self.mutation_datatype_mappings[function_name]["rawdata"]["args"] != None:
+                for arg_name, arg_body in self.mutation_datatype_mappings[function_name]["rawdata"]["args"].items():
+                    if arg_body["kind"] == "INPUT_OBJECT":
+                        output_json[function_name]["args"][arg_name]["args"] = self._build_inner_input_datatype_call_schema(arg_body["name"], self.mutation_datatype_mappings[function_name]["inputDatatype"][arg_name])
+                    else:
+                        output_json[function_name]["args"][arg_name]["ofDatatype"] = self.mutation_datatype_mappings[function_name]["inputDatatype"][arg_name]
+            else:
+                output_json[function_name]["args"] = {}
         return output_json
 
-        
+
+    def _build_inner_input_datatype_call_schema(self, input_object_name, datatype_mapping):
+        output_json = self.input_objects[input_object_name]["fields"]
+        for arg_name, arg_body in self.input_objects[input_object_name]["fields"].items():
+            if arg_body["kind"] == "INPUT_OBJECT":
+                output_json[arg_name] = self._build_inner_input_datatype_call_schema(arg_body["name"], datatype_mapping["arg_name"])
+            else:
+                output_json[arg_name]["ofDatatype"] = datatype_mapping["arg_name"]
+        return output_json
+
 
 
     # Estimate possible operation types by checking for key words in the function name
@@ -303,10 +380,10 @@ class FunctionBuilder:
                 self.mutation_datatype_mappings[function_name]["functionType"] = "Update"
             else:
                 self.mutation_datatype_mappings[function_name]["functionType"] = "Unknown"
-        
         return
 
 
+    # main function to map datatype with parameters in the query and mutations
     def link_functions_with_datatype(self, category):
         list = {}
         function_objects = self.schema_json[category]
@@ -344,11 +421,12 @@ class FunctionBuilder:
                         # to look for matching names.
                         elif arg_data_type["kind"] == "SCALAR" or arg_data_type["kind"] == "ENUM":
                             list[function_name]["inputDatatype"][arg_name] = self._get_scalar_with_datatype(arg_name)
-                        # Otherwise if it is an input object, we want to know if there's any ID type
+                        # Otherwise if it is an input object, we will expand and replace the input object with 
+                        # the actual object inside it. We will also check if there's any ID type
                         # inside the input object. Then we are basically doing similar things by searching
                         # inside the output datatype and find the mapping.
                         elif arg_data_type["kind"] == "INPUT_OBJECT":
-                            list[function_name]["inputDatatype"][arg_name] = self._search_related_object_from_input_object(arg_data_type["name"], arg_name, output_data_type["name"])
+                            list[function_name]["inputDatatype"][arg_name] = self._expand_object_from_input_object(arg_data_type["name"], output_data_type["name"])
                 else:
                     list[function_name]["inputDatatype"] = None
 
@@ -375,11 +453,12 @@ class FunctionBuilder:
                         # to look for matching names.
                         elif arg_data_type["kind"] == "SCALAR" or arg_data_type["kind"] == "ENUM":
                             list[function_name]["inputDatatype"][arg_name] = self._get_scalar_with_datatype(arg_name)
-                        # Similar as the input object type, even if there's an ID inside of it,
-                        # we are unable to check for the related datatype. Thus we will put a None
-                        # in here as well.
+                        # Otherwise if it is an input object, we will expand and replace the input object with 
+                        # the actual object inside it. We will also check if there's any ID type
+                        # inside the input object. Then we are basically doing similar things by searching
+                        # inside the output datatype and find the mapping.
                         elif arg_data_type["kind"] == "INPUT_OBJECT":
-                            list[function_name]["inputDatatype"][arg_name] = None
+                            list[function_name]["inputDatatype"][arg_name] = self._expand_object_from_input_object(arg_data_type["name"], None)
                 else:
                     list[function_name]["inputDatatype"] = None
 
@@ -408,11 +487,12 @@ class FunctionBuilder:
                         # to look for matching names.
                         elif arg_data_type["kind"] == "SCALAR" or arg_data_type["kind"] == "ENUM":
                             list[function_name]["inputDatatype"][arg_name] = self._get_scalar_with_datatype(arg_name)
-                        # Similar as the input object type, even if there's an ID inside of it,
-                        # we are unable to check for the related datatype. Thus we will put a None
-                        # in here as well.
+                        # Otherwise if it is an input object, we will expand and replace the input object with 
+                        # the actual object inside it. We will also check if there's any ID type
+                        # inside the input object. Then we are basically doing similar things by searching
+                        # inside the output datatype and find the mapping.
                         elif arg_data_type["kind"] == "INPUT_OBJECT":
-                            list[function_name]["inputDatatype"][arg_name] = None
+                            list[function_name]["inputDatatype"][arg_name] = self._expand_object_from_input_object(arg_data_type["name"], None)
                 else:
                     list[function_name]["inputDatatype"] = None
 
@@ -424,7 +504,6 @@ class FunctionBuilder:
             #    pass
 
         return list
-
 
     # Function to bypass any status like LIST or something
     # return the true type of the data
@@ -458,7 +537,33 @@ class FunctionBuilder:
         # then if we find nothing we return None
         return None
 
+    # check input object and expand it to datatype mappings
+    # if any ID type exists, it will check the output object for any ID type and mapping the datatype with the input
+    def _expand_object_from_input_object(self, input_object_datatype, output_datatype):
+        input_objects = self.input_objects
+        output = {}
 
+        # we check for every object inside the input object and see if it is an ID type
+        for input_object_name, input_object_body in input_objects[input_object_datatype]["fields"].items():
+            input_object_body = self._get_type(input_object_body)
+            if input_object_body["kind"] == "SCALAR" and input_object_body["name"] == "ID":
+                if output_datatype == None:
+                    output[input_object_name] = None
+                else:
+                    output[input_object_name] = self._search_related_object(input_object_name, output_datatype)
+            # if it is other scalar or enum type we will search the scalar-datatype list
+            # to look for matching names.
+            elif input_object_body["kind"] == "SCALAR" or input_object_body["kind"] == "ENUM":
+                output[input_object_name] = self._get_scalar_with_datatype(input_object_name)
+            # if we found an inner object, we call the function again to search for the input object name recursively
+            elif input_object_body["kind"] == "INPUT_OBJECT":
+                output[input_object_name] = self._expand_object_from_input_object(input_object_body["name"], output_datatype)
+            else:
+                output[input_object_name] = None
+        return output
+
+    # check input object and mapping it to possible datatypes
+    # if any ID type exists, it will check the output object for any ID type and mapping the datatype with the input
     def _search_related_object_from_input_object(self, input_object_datatype, id_name, output_object_name):
         result = None
         input_objects = self.input_objects
@@ -476,6 +581,7 @@ class FunctionBuilder:
         return result
 
 
+    # 
     def _link_objects_with_data_type(self):
         list = {}
         for object_name, object_body in self.objects.items():
@@ -497,27 +603,23 @@ class FunctionBuilder:
             return None
 
 
+'''
+test = FunctionBuilder("shopify_compiled.json")
+test.generate_grammer_file()
 
-if __name__ == '__main__':
-    #f = open("shopify_compiled.json", 'r')
+test = FunctionBuilder("schema_wallet.json", query_parameter_file_path="function_input.txt", mutation_parameter_file_path="function_mutation_input.txt")
+test1 = test.get_query_mappings()
+test2 = test.get_mutation_mappings()
 
-    test = FunctionBuilder("schema_wallet.json")
-    test.generate_grammer_file()
-
-    test = FunctionBuilder("schema_wallet.json", query_parameter_file_path="function_input.txt", mutation_parameter_file_path="function_mutation_input.txt")
-    test1 = test.get_query_mappings()
-    test2 = test.get_mutation_mappings()
-
-    test4 = test.get_query_mapping_by_input_datatype("Message")
-    test5 = test.get_query_mapping_by_output_datatype("Message")
-    test6 = test.get_mutation_mapping_by_input_datatype("Message")
-    test7 = test.get_mutation_mapping_by_output_datatype("Message")
-    ##test5 = test.get_mutation_mapping("checkoutCompleteFree")
-    test.print_function_list('function_list.txt')
-    test8 = test.build_function_call_schema("mutation", "createUser")
-    test.print_query_parameter_list('function_input.txt')
-    #test.read_query_parameter_list('function_input.txt')
-    test.print_mutation_parameter_list('function_mutation_input.txt')
-    #test.read_mutation_parameter_list('function_mutation_input.txt')
-    test3 = ""
-
+test4 = test.get_query_mapping_by_input_datatype("Message")
+test5 = test.get_query_mapping_by_output_datatype("Message")
+test6 = test.get_mutation_mapping_by_input_datatype("Message")
+test7 = test.get_mutation_mapping_by_output_datatype("Message")
+test.print_function_list('function_list.txt')
+test8 = test.build_function_call_schema("mutation", "createUser")
+test.print_query_parameter_list('function_input.txt')
+#test.read_query_parameter_list('function_input.txt')
+test.print_mutation_parameter_list('function_mutation_input.txt')
+#test.read_mutation_parameter_list('function_mutation_input.txt')
+test3 = ""
+'''
