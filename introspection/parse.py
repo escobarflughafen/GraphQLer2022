@@ -1,170 +1,257 @@
-import requests
-import functools
+from graphql_types import mutation
+from graphql_types import query
+from graphql_types import interface
+from graphql_types import enumeration
+from graphql_types import input_object
+from graphql_types import obj
 import json
 import yaml
-from pprint import pprint
-import connect
-import pathlib
 import os
+from connect import connect
+import sys
+sys.path.append(os.path.join(os.getcwd(), "graphql_types"))
 
-def get_type(typedef):
-    if typedef["ofType"] == None:
+class SchemaBuilder:
+    def __init__(self, url=None, introspection_json=None):
+        if introspection_json:
+            self.raw_introspection_json = introspection_json
+        elif url:
+            self.raw_introspection_json = connect.fetch_introspection(url=url)
+        else:
+            raise Exception(
+                "requires introspection source at parameter `url` or `introspection_json`")
+
+        datatypes = build_datatype(self.raw_introspection_json)
+        self.schema = {
+            "objects": datatypes["objects"],
+            "inputObjects": datatypes["input_objects"],
+            "queries": build_query(self.raw_introspection_json),
+            "mutations": build_mutation(self.raw_introspection_json),
+            "enums": build_enumeration(self.raw_introspection_json),
+            "interfaces": build_interface(self.raw_introspection_json),
+        }
+        self.instantiate()
+
+    def instantiate(self):
+        self.prepared_schema = {
+            "objects": {
+                k: obj.Object(k, schema_json=self.schema["objects"][k]) for k in self.schema["objects"]
+            },
+            "inputObjects": {
+                k: input_object.InputObject(k, schema_json=self.schema["inputObjects"][k]) for k in self.schema["inputObjects"]
+            },
+            "queries": {
+                k: query.Query(k, schema_json=self.schema["queries"][k]) for k in self.schema["queries"]
+            },
+            "mutations": {
+                k: mutation.Mutation(k, schema_json=self.schema["mutations"][k]) for k in self.schema["mutations"]
+            },
+            "enums": {
+                k: enumeration.Enum(k, schema_json=self.schema["enums"][k]) for k in self.schema["enums"]
+            },
+            "interfaces": {
+                k: interface.Interface(k, schema_json=self.schema["interfaces"][k]) for k in self.schema["interfaces"]
+            },
+        }
+
+    def dump(self, fp=None, path=None):
+        json_literal = json.dumps(self.schema)
+
+        if fp:
+            json.dump(self.schema, fp)
+        elif path:
+            with open(path, "w") as f:
+                json.dump(self.schema, f)
+        else:
+            print(json_literal, file=sys.stdout)
+
+        return json_literal
+
+
+# parse object type recursively
+def of_type(typedef):
+    if not typedef:
+        return None
+    if "ofType" in typedef:
+        if typedef["ofType"] == None:
+            return {
+                "kind": typedef["kind"],
+                "name": typedef["name"]
+            }
+        else:
+            # flatten non-null wrapper
+            kind = typedef["kind"]
+            if kind == "NON_NULL":
+                _type = of_type(typedef["ofType"])
+                return {
+                    **_type,
+                    "nonNull": True
+                }
+            else:
+                return {
+                    "kind": kind,
+                    "name": typedef["name"],
+                    "ofType": of_type(typedef["ofType"]),
+                }
+    else:
         return {
             "kind": typedef["kind"],
             "name": typedef["name"]
         }
-    else:
-        # flatten one level of non-null wrapper
-        kind = typedef["kind"]
-        if kind == "NON_NULL":
-            _type = get_type(typedef["ofType"])
-            return {
-                **_type,
-                "nonNull": True
-            }
-        else:
-            return {
-                "kind": kind,
-                "name": typedef["name"],
-                "ofType": get_type(typedef["ofType"])
-            }
+
+# parsing {query arguments || object fields} from intropsection json
 
 
-def parse_data_type(inspection_json):
+def parse_args(args_raw, type_key="type"):
+    args = None
+    if args_raw:
+        args = {}
+        for arg_raw in args_raw:
+            arg_name = arg_raw["name"]
+            args[arg_name] = of_type(arg_raw[type_key])
 
-    object_list = []
-
-    # Get query type name
-    query_type_name = inspection_json["data"]["__schema"]["queryType"]["name"]
-
-    # Get mutation type name
-    mutation_type_name = inspection_json["data"]["__schema"]["mutationType"]["name"]
-
-    # Get subscription type name
-    # subscription_type_name = inspection_json["data"]["__schema"]["subscriptionType"]["name"]
-
-    type_data = inspection_json["data"]["__schema"]["types"]
-
-    for d in type_data:
-        if d["kind"] == "OBJECT":
-            # Filter out multation & query & subscription & introspection system object.
-            if d["name"] != query_type_name and d["name"] != mutation_type_name and d["name"][:2] != "__":
-                object = {}
-                object_name = d["name"]
-                object_params = {}
-                object_params["params"] = {}
-
-                for f in d["fields"]:
-                    param_name = f["name"]
-                    param_type = {}
-                    param_type = get_type(f["type"])
-
-                    # Add to the parameter list.
-                    object_params["params"][param_name] = param_type
-
-                object[object_name] = object_params
-                object_list.append(object)
-
-        elif d["kind"] == "INPUT_OBJECT":
-            object = {}
-            object_name = d["name"]
-            object_params = {}
-            object_params["params"] = {}
-
-            for f in d["inputFields"]:
-                param_name = f["name"]
-                param_type = {}
-                param_type = get_type(f["type"])
-
-                # Add to the parameter list.
-                object_params["params"][param_name] = param_type
-
-            object[object_name] = object_params
-            object_list.append(object)
-
-    return object_list
+    return args
 
 
-def parse_query(introspection_json):
-    query_list = []
+def build_enumeration(introspection_json):
+    enumerations = {}
 
-    # Get query type name
-    query_type_name = introspection_json["data"]["__schema"]["queryType"]["name"]
+    def is_user_defined_enum(raw_json):
+        return raw_json["kind"] == "ENUM" and raw_json["name"][:2] != '__'
 
     type_data = introspection_json["data"]["__schema"]["types"]
 
     for d in type_data:
-        if d["kind"] == "OBJECT":
-            if d["name"] == query_type_name:
-                for f in d["fields"]:
-                    object = {}
-                    object["name"] = f["name"]
-                    types = {}
-                    types = get_type(f["type"])
+        if is_user_defined_enum(d):
+            enum_name = d["name"]
+            enum = {
+                "raw": d,
+                "values": d["enumValues"]
+            }
+            enumerations[enum_name] = enum
 
-                    object["produces"] = types
-
-                    object["consumes"] = []
-
-                    for a in f["args"]:
-                        arg = {}
-                        arg["name"] = a["name"]
-                        types = {}
-                        types = get_type(a["type"])
-                        arg["type"] = types
-
-                        object["consumes"].append(arg)
-
-                    query_list.append(object)
-
-    return query_list
+    return enumerations
 
 
-def get_name(raw_introspection):
-    return raw_introspection["name"]
+def build_interface(introspection_json):
+    interfaces = {}
+
+    def is_user_defined_interface(raw_json):
+        return raw_json["kind"] == "INTERFACE" and raw_json["name"][:2] != '__'
+
+    type_data = introspection_json["data"]["__schema"]["types"]
+
+    for d in type_data:
+        if is_user_defined_interface(d):
+            interface_name = d["name"]
+
+            interface = {
+                "raw": d,
+                "kind": "INTERFACE",
+                "fields": parse_args(d["fields"]),
+                "interfaces": parse_args(d["interfaces"], type_key="ofType"),
+                "possibleTypes": parse_args(d["possibleTypes"], type_key="ofType")
+            }
+
+            interfaces[interface_name] = interface
+
+    return interfaces
 
 
-def get_args(raw_introspection):
-    args = []
-    raw_args = raw_introspection["args"]
-    for arg in raw_args:
-        obj = {}
-        obj["name"] = arg["name"]
-        obj["type"] = get_type(arg["type"])
-        obj["defaultValue"] = arg["defaultValue"]
+def build_datatype(introspection_json):
+    objects = {}
+    input_objects = {}
 
-        args.append(obj)
-    return args
+    # Get query type name
+    query_type_name = introspection_json["data"]["__schema"]["queryType"]["name"]
+
+    # Get mutation type name
+    try:
+        mutation_type_name = introspection_json["data"]["__schema"]["mutationType"]["name"]
+    except Exception:
+        mutation_type_name = ""
+
+    # Get subscription type name
+    try:
+        subscription_type_name = introspection_json["data"]["__schema"]["subscriptionType"]["name"]
+    except Exception:
+        subscription_type_name = ""
+
+    type_data = introspection_json["data"]["__schema"]["types"]
+
+    def is_user_defined_object_kind(typekind, typename):
+        object_kinds = ['OBJECT', 'INPUT_OBJECT']
+        object_name_filters = [query_type_name,
+                               mutation_type_name, subscription_type_name]
+
+        assertion = (typekind in object_kinds) and (
+            typename[:2] != "__") and (typename not in object_name_filters)
+
+        return assertion
+
+    for d in type_data:
+        typekind = d["kind"]
+        typename = d["name"]
+        if is_user_defined_object_kind(typekind, typename):
+            object = {
+                "raw": d,
+                "kind": typekind,
+            }
+
+            if typekind == "OBJECT":
+                objects[typename] = object
+                # Filter out mutation & query & subscription & introspection system object.
+                object["fields"] = parse_args(d["fields"])
+                # TODO: 11-16'22
+                # if the object is implementing a interface
+                object["interfaces"] = parse_args(
+                    d["interfaces"], type_key="ofType")
+
+            elif typekind == "INPUT_OBJECT":
+                input_objects[typename] = object
+                object["fields"] = parse_args(d["inputFields"])
+
+    return {
+        "objects": objects,
+        "input_objects": input_objects
+    }
 
 
-def get_return_type(raw_introspection):
-    return raw_introspection["type"]
+def build_query(introspection_json):
+    queries = {}
+
+    # Get query type name
+    query_type_name = introspection_json["data"]["__schema"]["queryType"]["name"]
+    type_data = introspection_json["data"]["__schema"]["types"]
+
+    for d in type_data:
+        if d["kind"] == "OBJECT" and d["name"] == query_type_name:
+            for query_raw in d["fields"]:
+                # parsing query properties
+                query_name = query_raw["name"]
+                queries[query_name] = {}
+
+                queries[query_name]["raw"] = query_raw
+                queries[query_name]["type"] = of_type(query_raw["type"])
+                queries[query_name]["args"] = parse_args(query_raw["args"])
+
+    return queries
 
 
-def get_action_type(args):
-    has_input_field = False
-    has_id_field = False
-    for arg in args:
-        if arg["type"]["kind"] == "SCALAR" and arg["type"]["name"] == "ID":
-            has_id_field = True
+# predicates for determining mutation action type
+# refer to https://www.apollographql.com/blog/graphql/basics/designing-graphql-mutations/
 
-        if arg["type"]["kind"] == "INPUT_OBJECT":
-            has_input_field = True
+def build_mutation(introspection_json):
+    def get_name(raw_introspection):
+        return raw_introspection["name"]
 
-    if has_input_field and has_id_field:
-        return "UPDATE"
+    def get_return_type(raw_introspection):
+        return raw_introspection["type"]
 
-    if has_input_field and not has_id_field:
-        return "CREATE"
+    def get_action_type(args):
+        return ""
 
-    if not has_input_field and has_id_field:
-        return "DELETE"
-
-    return "OTHER"
-
-
-def parse_mutation(introspection_json):
-    mutation_list = []
+    mutations = {}
     raw_mutation_list = []
 
     mutation_type_name = introspection_json["data"]["__schema"]["mutationType"]["name"]
@@ -175,57 +262,37 @@ def parse_mutation(introspection_json):
 
     for raw_mutation in raw_mutation_list:
         mutation = {
-            "name": get_name(raw_mutation),
-            "args": get_args(raw_mutation),
-            "return_type": get_return_type(raw_mutation)
+            # "name": get_name(raw_mutation), # unnecessary - use name as key
+            "raw": raw_mutation,
+            "args": parse_args(raw_mutation["args"]),
+            "type": get_return_type(raw_mutation),
         }
 
-        mutation["action_type"] = get_action_type(mutation["args"])
+        mutations[get_name(raw_mutation)] = mutation
 
-        mutation_list.append(mutation)
-
-    return mutation_list
-
-#def parse_dependency(data_types, queries, mutations):
-  
+    return mutations
 
 
-def generate_grammar_file(path, data_types, queries, mutations):
+def generate_grammar_file(path, objects, input_objects, queries, mutations, type="json"):
     if os.path.exists(path):
         raise Exception("File has already existed.")
-    
-    f = open(path, 'w') 
+
+    f = open(path, 'w')
 
     grammer = {
-        "DataTypes": data_types,
-        "Queries": queries,
-        "Mutations": mutations
+        "objects": objects,
+        "inputObjects": input_objects,
+        "queries": queries,
+        "mutations": mutations
     }
 
-    json.dump(grammer, f)
-    f.close()
+    if type == "yaml":
+        yaml.dump(grammer, f)
+    elif type == "json":
+        json.dump(grammer, f)
 
-    
+    f.close()
 
 
 if __name__ == "__main__":
-    introspection_json = connect.get_introspection(
-        url="http://neogeek.io:4000/graphql")
-
-    object_type_list = parse_data_type(introspection_json)
-    query_list = parse_query(introspection_json)
-    mutation_list = parse_mutation(introspection_json)
-
-    generate_grammar_file('./grammer.json', object_type_list, query_list, mutation_list)
-    
-
-
-    print(json.dumps(object_type_list, indent=2))
-    print(json.dumps(query_list, indent=2))
-    print(json.dumps(mutation_list, indent=2))
-
-    '''
-    yaml.dump(object_type_list, open("./object_type_list.yml", "w"))
-    yaml.dump(query_list, open("./query_list.yml", "w"))
-    yaml.dump(mutation_list, open("./mutation_list.yml", "w"))
-    '''
+    print("parse.py")
