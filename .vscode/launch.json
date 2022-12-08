@@ -1,0 +1,56 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+
+
+
+        {
+            "name": "Python: Test Shopify Schema",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/main.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "--mode",
+                "debug",
+                "-i",
+                "./introspection/schemas/shopify.json",
+                /*
+                "-u",
+                "http://neogeek.io:4000/graphql",
+                */
+            ]
+        },
+        {
+            "name": "Python: Debug",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/main.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "--mode",
+                "debug",
+                "-u",
+                "http://neogeek.io:4001/graphql",
+            ]
+        },
+        {
+            "name": "Python: TestFuzzing",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/main.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "--mode",
+                "fuzzing",
+                "--schema",
+                "./rickmorty",
+                "-u",
+                "https://rickandmortyapi.com/graphql"
+            ]
+        }
+    ],
+}

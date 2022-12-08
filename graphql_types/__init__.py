@@ -7,3 +7,5 @@ from obj import Object
 from mutation import Mutation
 from .query import Query
 '''
+import sys
+sys.path.append("../graphql_types")

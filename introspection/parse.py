@@ -29,9 +29,11 @@ class SchemaBuilder:
             "mutations": build_mutation(self.raw_introspection_json),
             "enums": build_enumeration(self.raw_introspection_json),
             "interfaces": build_interface(self.raw_introspection_json),
+            "unions": build_union(self.raw_introspection_json),
         }
         self.instantiate()
 
+    #depreciated
     def instantiate(self):
         self.prepared_schema = {
             "objects": {
@@ -53,6 +55,9 @@ class SchemaBuilder:
                 k: interface.Interface(k, schema_json=self.schema["interfaces"][k]) for k in self.schema["interfaces"]
             },
         }
+    
+    def schema(self):
+        return self.schema
 
     def dump(self, fp=None, path=None):
         json_literal = json.dumps(self.schema)
@@ -112,6 +117,28 @@ def parse_args(args_raw, type_key="type"):
 
     return args
 
+def build_union(introspection_json):
+    unions = {}
+
+    def is_user_defined_union(raw_json):
+        return raw_json["kind"] == 'UNION' and raw_json["name"][:2] != '__'
+    
+    type_data = introspection_json["data"]["__schema"]["types"]
+
+    for d in type_data:
+        if is_user_defined_union(d):
+            union_name = d["name"]
+            union = {
+                "raw": d,
+                "possibleTypes": {
+                    t["name"]: t["kind"] for t in d["possibleTypes"]
+                }
+            }
+
+            unions[union_name] = union
+
+    return unions
+    
 
 def build_enumeration(introspection_json):
     enumerations = {}
@@ -221,7 +248,11 @@ def build_query(introspection_json):
     queries = {}
 
     # Get query type name
-    query_type_name = introspection_json["data"]["__schema"]["queryType"]["name"]
+    try:
+        query_type_name = introspection_json["data"]["__schema"]["queryType"]["name"]
+    except Exception:
+        return queries 
+
     type_data = introspection_json["data"]["__schema"]["types"]
 
     for d in type_data:
@@ -248,13 +279,14 @@ def build_mutation(introspection_json):
     def get_return_type(raw_introspection):
         return raw_introspection["type"]
 
-    def get_action_type(args):
-        return ""
-
     mutations = {}
     raw_mutation_list = []
 
-    mutation_type_name = introspection_json["data"]["__schema"]["mutationType"]["name"]
+    try:
+        mutation_type_name = introspection_json["data"]["__schema"]["mutationType"]["name"]
+    except Exception:
+        return mutations
+        
 
     for _ in introspection_json["data"]["__schema"]["types"]:
         if _["name"] == mutation_type_name:

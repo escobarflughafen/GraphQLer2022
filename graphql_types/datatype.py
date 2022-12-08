@@ -18,3 +18,4 @@ class Datatype:
 
     def __build_with_sdl(self, sdl):
         self.schema = {}
+    

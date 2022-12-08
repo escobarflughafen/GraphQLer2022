@@ -2,7 +2,6 @@ from request.request import Request
 from graphql_types.mutation import Mutation
 from graphql_types.query import Query
 import progressbar
-from logger import Logger
 
 from fuzzing.fuzzer.fuzzer import Fuzzer
 from graphql_types.process_functions import FunctionBuilder
@@ -87,7 +86,7 @@ def traverse_object(oftype, data, callback, schema, function_type="Create"):
 
 
 class Requestor:
-    def __init__(self, req_seq, cache, fuzzer: Fuzzer, url, schema, function_builder: FunctionBuilder):
+    def __init__(self, req_seq, cache, fuzzer: Fuzzer, url, schema, function_builder: FunctionBuilder, logger):
         self.req_seq = req_seq
         self.cache = cache
         self.fuzzer = fuzzer
@@ -96,7 +95,7 @@ class Requestor:
         self.current_id_oftype = ''
         self.function_builder = function_builder
         self.errors = []
-        self.logger = Logger()
+        self.logger = logger
 
     def concretize_args(self, args):
         for arg in args:
@@ -124,7 +123,6 @@ class Requestor:
                     id_of_type = arg[2]
 
                     arg[0] = self.fuzzer.resolve_id(id_of_type)
-                    #arg[0] = self.fuzzer.resolve_id(arg)
 
                 else:
                     raise Exception(
@@ -190,18 +188,14 @@ class Requestor:
                     self.cache.save(cache_type, object_name, value, id)
 
             # TODO: resolve response & error handling
-
             
             if 'errors' in response:
                 self.handle_error(response)
-
                 self.logger.append_task(func, "Failed", payload_string, response)
             else:
+                self.logger.append_task(func, "Success", payload_string, response)
                 if MODE == Request.MODE_QUERY:
                     traverse_response(response, save_in_cache, schema)
                 else:
                     traverse_response(response, save_in_cache, schema, func_instance.args_schema[func]["functionType"])
-                self.logger.append_task(func, "Success", payload_string, response)
-
-        self.logger.output("result.txt")
 
