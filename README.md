@@ -3,7 +3,7 @@
 
 ### Setup
 
-Create the virtual environment
+Create the virtual environments
 
 ```shell
 python3 -m venv .env
@@ -27,21 +27,19 @@ pip3 install -r requirements.txt
 
 ### Basic Usage
 
-Help info
-
 ```shell
 python3 main.py --help
 
-usage: 
+usage:
         GraphQLer - a stateful fuzzing tool on GraphQL
-        
-       [-h] --mode {compile,fuzzing,debug_fuzzing} [--test] [--url URL]
-       [--wordlist WORDLIST] [--introspection-json INTROSPECTION_JSON] [--save SAVE]
-       [--schema SCHEMA]
+         [-h] --mode {compile,fuzzing,debug_fuzzing}
+                                                                        [--test] [--url URL] [--wordlist WORDLIST]
+                                                                        [--introspection-json INTROSPECTION_JSON]
+                                                                        [--save SAVE] [--schema SCHEMA]
 
 options:
   -h, --help            show this help message and exit
-  --mode {compile,fuzzing,debug_fuzzing}, -mode {compile,fuzzing,debug_fuzzing}
+  --mode {compile,fuzzing,debug_fuzzing}, -m {compile,fuzzing,debug_fuzzing}
   --test, -t
   --url URL, -u URL
   --wordlist WORDLIST, -w WORDLIST
