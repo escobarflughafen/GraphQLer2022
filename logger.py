@@ -2,8 +2,9 @@
 
 class Logger:
 
-    def __init__(self):
+    def __init__(self, output_path):
         self.tasks = []
+        self.output_path = output_path
 
 
     def append_task(self, function_name, status, input, output):
@@ -14,16 +15,16 @@ class Logger:
                         })
         return
 
-    def output(self, output_path):
-        task_count = self.tasks.count()
+    def output(self):
+        task_count = self.tasks.__len__()
         i = 1
         output = ""
-        f = open(output_path, 'w')
+        f = open(self.output_path, 'w')
         for task in self.tasks:
-            output += "Task " + i + "/" + task_count + ":\n"
+            output += "Task " + str(i) + "/" + str(task_count) + ":\n"
             output += "Fuzzing function: " + task["function_name"] + " with status: " + task["status"] + "\n"
-            output += "----- Input string -----\n" + task["input"]
-            output += "----- Output string -----\n" + task["output"]
+            output += "----- Input string -----\n" + task["input"] + "\n"
+            output += "----- Output string -----\n" + str(task["output"]) + "\n"
             output += "\n\n"
             i += 1
         f.write(output)
