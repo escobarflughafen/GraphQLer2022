@@ -2,11 +2,6 @@ from queue import Queue
 import json
 import os
 
-# TODO: User input processed introspection Json file.
-
-#SCHEMAPATH = "./introspection/schema.json"
-SCHEMAPATH = "./neogeek_compiled.json"
-
 # TODO: Consider checking Union before making the sequence.
 
 class ObjectSequenceBuilder:
@@ -95,15 +90,10 @@ class ObjectSequenceBuilder:
 
         while not self.object_queue.empty():
             self.unsolved_object.append(self.object_queue.get())
-        
-        # TODO: User input path output file path.
-        # self.generate_object_sequence_file("./object_sequence.json")
-        
-        # Test remove later
+                
         return (self.object_sequence, self.unsolved_object)
 
     
-    # TODO: User input path output file path.
     def generate_object_sequence_file(self, path):
         '''
         Generate a file contains object sequence for user to review.
