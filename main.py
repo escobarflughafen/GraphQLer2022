@@ -1,9 +1,18 @@
 import argparse
-import time
-from os import error
+import os
 import introspection.parse as parse
 from introspection.object_dependency import ObjectSequenceBuilder
 import json
+from request import request
+from pprint import pprint
+from fuzzing.requestor import Requestor
+from fuzzing.cache import Cache
+from fuzzing.fuzzer.constant import ConstantFuzzer
+from graphql_types.process_functions import FunctionBuilder
+from introspection.sequence import SequenceBuilder
+from introspection.object_dependency import ObjectSequenceBuilder
+from utils.logger import Logger
+
 
 def get_args():
     parser = argparse.ArgumentParser(
@@ -13,10 +22,10 @@ def get_args():
     )
 
     parser.add_argument(
-        '--mode','-mode',
+        '--mode', '-m',
         required=True,
         type=str,
-        choices=["compile", "fuzz"],
+        choices=["compile", "fuzzing", "debug_fuzzing"],
         default="compile"
     )
 
@@ -31,6 +40,11 @@ def get_args():
     )
 
     parser.add_argument(
+        '--wordlist', '-w',
+        type=str
+    )
+
+    parser.add_argument(
         '--introspection-json', '-i',
         type=str
     )
@@ -40,12 +54,22 @@ def get_args():
         type=str
     )
 
+    parser.add_argument(
+        '--schema',
+        type=str
+    )
+
     return parser
 
 
 if __name__ == '__main__':
     args = get_args().parse_args()
     test = args.test
+    schema_file_name = 'schema.json'
+    function_list_file_name = 'mutation_function_list.yml'
+    query_parameter_file_name = 'query_parameter_list.yml'
+    mutation_parameter_file_name = 'mutation_parameter_list.yml'
+
     if test:
         print(args)
 
@@ -56,19 +80,67 @@ if __name__ == '__main__':
             schema_builder = parse.SchemaBuilder(url=url)
         elif introspection_json_path:
             with open(introspection_json_path) as f:
-                schema_builder = parse.SchemaBuilder(introspection_json=json.load(f))
+                schema_builder = parse.SchemaBuilder(
+                    introspection_json=json.load(f))
         else:
-            raise Exception("please add corrent introspection source to arguments by --url or --introspection-json")
-
-        print(schema_builder.prepared_schema)
+            raise Exception(
+                "please add corrent introspection source to arguments by --url or --introspection-json")
 
         if args.save:
-            schema_builder.dump(path=args.save)
-        else:
-            schema_builder.dump()
-        
-    # testest
-    # TODO: User input processed introspection Json file!
+            if not os.path.isdir(args.save):
+                os.mkdir(args.save)
 
-    # test end
+            schema_builder.dump(path=os.path.join(args.save, schema_file_name))
+        else:
+            raise Exception("Need to specify a path to save schema files.")
+
+        function_builder = FunctionBuilder(
+            os.path.join(args.save, schema_file_name))
+        function_builder.generate_grammer_file(args.save)
         
+
+    elif args.mode == 'fuzzing':
+        url = args.url
+        parsed_schema_path = args.schema
+        if not os.path.isdir(parsed_schema_path):
+            raise Exception("FUZZING: Directory doesn't exist")
+
+        with open(os.path.join(parsed_schema_path, schema_file_name)) as f:
+            schema = json.load(f)
+
+        function_builder = FunctionBuilder(
+            os.path.join(parsed_schema_path, schema_file_name),
+            function_list_file_path=os.path.join(
+                parsed_schema_path, function_list_file_name),
+            query_parameter_file_path=os.path.join(
+                parsed_schema_path, query_parameter_file_name),
+            mutation_parameter_file_path=os.path.join(
+                parsed_schema_path, mutation_parameter_file_name)
+        )
+
+        obj_seq_builder = ObjectSequenceBuilder(
+            os.path.join(parsed_schema_path, schema_file_name))
+        sequence_builder = SequenceBuilder(
+
+            obj_seq_builder.build_sequence()[0],
+            function_builder
+        )
+
+        req_seq = sequence_builder.build_request_sequence()
+
+        cache = Cache(schema)
+        logger = Logger(os.path.join(
+                                  parsed_schema_path, "result.txt"))
+
+        requestor = Requestor(req_seq,
+                              cache,
+                              ConstantFuzzer(schema, cache),
+                              url,
+                              schema,
+                              function_builder,
+                              logger
+                              )
+
+        requestor.execute(schema)
+        logger.log()
+

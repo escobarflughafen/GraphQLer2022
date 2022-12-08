@@ -13,4 +13,10 @@ class Object(datatype.Datatype):
     def is_implemented_from(self, interface):
         return interface.is_interface_of(self)
     
+    def cache():
+        pass
+
+    def consume():
+        pass
+        
 
