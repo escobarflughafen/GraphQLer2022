@@ -1,10 +1,12 @@
-const fs = require('fs');
-const {v4: uuid} = require('uuid');
+import fs from 'fs';
+import {v4} from 'uuid';
 
 import { makeExecutableSchema } from 'graphql-tools';
 
+const uuid = v4;
 
-const schemaString = fs.readFileSync('data/schema.gql', 'utf-8');
+const schemaString = fs.readFileSync('./data/schema.gql', 'utf-8');
+
 var users = []
 var transactions = []
 var locations = []

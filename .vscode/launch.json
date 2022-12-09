@@ -1,10 +1,22 @@
 {
     "version": "0.2.0",
     "configurations": [
-    
-
-
-        
+        {
+            "name": "LocalFuzzing",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/main.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "--mode",
+                "fuzzing",
+                "--schema",
+                "./debug",
+                "-u",
+                "http://localhost:4001/graphql"
+            ]
+        },
         {
             "name": "Python: Fuzzing Suomi",
             "type": "python",

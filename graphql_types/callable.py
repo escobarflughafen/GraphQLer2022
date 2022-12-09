@@ -127,9 +127,8 @@ class Callable(datatype.Datatype):
                         # TODO: Process SCALAR & ENUMS
                         # TODO: Recursively resolve lists 120922
                         of_type = get_type(fields[field]["ofType"])
-                        if of_type == 'OBJECT':
-                            child_obj = all_objects[fields[field]
-                                                    ["ofType"]["name"]]
+                        if of_type["kind"] == 'OBJECT':
+                            child_obj = all_objects[of_type["name"]]
                             child_obj_query_fields = {}
                             prepared_return_fields[field] = child_obj_query_fields
                             traverse_fields(
