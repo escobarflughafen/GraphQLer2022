@@ -1,14 +1,40 @@
 import os
 class Logger:
+    """
+    The class for output log file. Passed functions will be logged in the log_pass.txt, and failed functions will be logged in the log_fail.txt.
+
+    Attributes
+    ----------
+    output_path: the folder to store the log file.
+
+    Methods
+    -------
+    log_task(self, function_name, status, input, output):
+        Add a new log entry. This function will call self.log() each time a new log entry has been added.
+    log(self):
+        Generate the log file for all current log entries. Usually no need to call this function as it will be called in the log_task() function.
+    """
+
     STATUS_PASS = "Passed"
     STATUS_FAIL = "Failed"
 
     def __init__(self, output_path):
+
         self.tasks = []
         self.output_path = output_path
 
 
     def log_task(self, function_name, status, input, output):
+        """
+        Add a new log entry. This function will call self.log() each time a new log entry has been added.
+
+        Parameters
+        ----------
+        function_name: The name for the function.
+        status: The function call status, this can only be STATUS_PASS or STATUS_FAIL.
+        input: The input string for the function call.
+        output: The output string for the function call.
+        """
         self.tasks.append({"function_name": function_name,
                         "status": status,
                         "input": input, 
@@ -18,6 +44,9 @@ class Logger:
         return
 
     def log(self):
+        """
+        Generate the log file for all current log entries. Usually no need to call this function as it will be called in the log_task() function.
+        """
         task_count = self.tasks.__len__()
         i = 1
         output_pass = ""
