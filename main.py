@@ -128,8 +128,7 @@ if __name__ == '__main__':
         req_seq = sequence_builder.build_request_sequence()
 
         cache = Cache(schema)
-        logger = Logger(os.path.join(
-                                  parsed_schema_path, "result.txt"))
+        logger = Logger(parsed_schema_path)
 
         requestor = Requestor(req_seq,
                               cache,
