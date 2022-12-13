@@ -2,6 +2,56 @@ import random
 import os
 import sys
 
+def get_base_type_detail(type_def):
+    if type_def.get("ofType"):
+        return get_base_type_detail(type_def["ofType"]) 
+    else:
+        return (type_def["kind"], type_def["name"])
+
+
+def load_data(response_data: dict, schema: dict, cache):
+    '''
+    Add return objects to cache recursively. 
+    
+    '''
+    func_name = list(response_data["data"].keys())[0]
+    func_res = response_data["data"][func_name]
+    obj_type = ""
+
+    # Search corresponding mutation/query in the schema.
+    if func_name in schema["queries"]:
+        obj_type = get_base_type_detail(schema["queries"][func_name]["type"])[1]
+    elif func_name in schema["mutations"]:
+        obj_type = get_base_type_detail(schema["mutations"][func_name]["type"])[1]
+
+    load_response_to_cache_helper(func_res, schema, cache, obj_type)
+
+
+def load_response_to_cache_helper(func_res: dict, schema: dict, cache, obj_type: str):
+    # Store whole object to cache.
+    cache.save("objects", obj_type, func_res)
+
+    # Store Id in cache.
+    if func_res.get("id"):
+        cache.save("id", obj_type, func_res["id"])
+
+    # Store child object in the cache.
+    obj_fields = schema["objects"][obj_type]["fields"]
+
+    for f in obj_fields:
+        if get_base_type_detail(obj_fields[f])[0] == "OBJECT":
+            child_obj_name = get_base_type_detail(obj_fields[f])[1]
+            child_obj_details = func_res.get(f)
+
+            # Check list or non-list.
+            if isinstance(child_obj_details, list):
+                for i in child_obj_details:
+                    load_response_to_cache_helper(i, schema, cache, child_obj_name)
+            elif isinstance(child_obj_details, dict):
+                if child_obj_details:
+                    load_response_to_cache_helper(child_obj_details, schema, cache, child_obj_name)
+
+
 
 class Cache:
     def __init__(self, schema):
