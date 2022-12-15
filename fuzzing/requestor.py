@@ -192,9 +192,9 @@ class Requestor:
             
             if 'errors' in response:
                 self.handle_error(response)
-                self.logger.append_task(func, "Failed", payload_string, response)
+                self.logger.log_task(func, self.logger.STATUS_FAIL, payload_string, response)
             else:
-                self.logger.append_task(func, "Success", payload_string, response)
+                self.logger.log_task(func, self.logger.STATUS_PASS, payload_string, response)
                 if MODE == Request.MODE_QUERY:
                     traverse_response(response, save_in_cache, schema)
                 else:

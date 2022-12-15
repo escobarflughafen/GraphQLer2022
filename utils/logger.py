@@ -51,8 +51,8 @@ class Logger:
         i = 1
         output_pass = ""
         output_fail = ""
-        f_pass = open(os.path.join(self.output_path, "log_pass.txt"), 'a')
-        f_fail = open(os.path.join(self.output_path, "log_fail.txt"), 'a')
+        f_pass = open(os.path.join(self.output_path, "log_pass.txt"), 'w')
+        f_fail = open(os.path.join(self.output_path, "log_fail.txt"), 'w')
         for task in self.tasks:
             temp = ""
             temp += "Task " + str(i) + "/" + str(task_count) + ":\n"

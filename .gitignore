@@ -21,6 +21,7 @@ grammar*.json
 temp/*
 */temp
 test/*
+demo*/*
 
 #debug files
 debug*/*
