@@ -94,7 +94,7 @@ class Requestor:
         self.schema = schema
         self.current_id_oftype = ''
         self.function_builder = function_builder
-        self.errors = []
+        self.errors = {}
         self.logger = logger
 
     def concretize_args(self, args):
@@ -129,9 +129,21 @@ class Requestor:
                     raise Exception(
                         f"error in concretizing function argument {arg}")
 
-    def handle_error(self, response):
-        self.errors.append(response)
-        return 0
+    def handle_error(self, queryname, response):
+        errors = response["error"]["errors"]
+        for error in errors:
+            error_code = error["extensions"]["code"]
+            error_msg = error["message"]
+            
+            if error_code in self.errors:
+                self.errors["error_code"] = {
+                    "raw": error,
+                    "message": error_msg,
+                    "query": queryname
+                }
+        
+            print(f"""ERROR - {queryname}: {error_code}""")
+
 
     def execute(self, schema):
         for func in progressbar.progressbar(self.req_seq):
@@ -191,8 +203,9 @@ class Requestor:
             # TODO: resolve response & error handling
             
             if 'errors' in response:
-                self.handle_error(response)
+                self.handle_error(func, response)
                 self.logger.log_task(func, self.logger.STATUS_FAIL, payload_string, response)
+                
             else:
                 self.logger.log_task(func, self.logger.STATUS_PASS, payload_string, response)
                 if MODE == Request.MODE_QUERY:

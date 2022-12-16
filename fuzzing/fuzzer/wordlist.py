@@ -11,7 +11,7 @@ default_constants = {
     'Enum': 0
 }
 
-class ConstantFuzzer(Fuzzer):
+class WordlistFuzzer(Fuzzer):
 
     def __init__(self, schema, cache, wordlists: dict):
         super().__init__(schema, cache)
@@ -32,7 +32,7 @@ class ConstantFuzzer(Fuzzer):
             return default_constants['Float']
 
     def resolve_string(self, arg):
-        return self.wordlists['String'].readline()
+        return self.wordlists['String'].readline()[:-1]
 
     def resolve_enum(self, arg):
         enum_schema = self.schema["enums"]
@@ -45,5 +45,5 @@ class ConstantFuzzer(Fuzzer):
         if wordlist_value not in enum_values:
             return enum_values[default_constants['Enum']]
 
-        return self.wordlists["Enum"].readline()
+        return self.wordlists["Enum"].readline()[:-1]
     
