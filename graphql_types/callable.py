@@ -25,28 +25,6 @@ class Callable(datatype.Datatype):
         generate a unfulfilled dict for arguments and return fields
         '''
 
-        '''
-        def prepare_args(args, all_input_objects):
-            
-            prepared_args = {}
-            if not args:
-                return {}
-
-            for arg in args:
-                if args[arg]["kind"] == "INPUT_OBJECT":
-                    prepared_args[arg] = process_input_object(
-                        all_input_objects[args[arg]["name"]], all_input_objects)
-                elif args[arg]["kind"] == "LIST":
-                    prepared_args[arg]=[[None, args[arg]["name"]]]
-                elif args[arg]["name"] == 'ID':
-                    
-                    prepared_args[arg] = [None, 'ID', args[arg]["ofDatatype"]]
-                else:
-                    prepared_args[arg]=[None, args[arg]["name"]]
-
-            return prepared_args
-        '''
-
         def prepare_input_object(arg, all_input_objects):
             #input_object = all_input_objects[arg["name"]]
             processed_input_object = {}

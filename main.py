@@ -65,6 +65,11 @@ def get_args():
         type=str
     )
 
+    parser.add_argument(
+        '--no-name-mapping',
+        action='store_true'
+    )
+
 
     return parser
 
@@ -102,7 +107,9 @@ if __name__ == '__main__':
             raise Exception("Need to specify a path to save schema files.")
 
         function_builder = FunctionBuilder(
-            os.path.join(args.save, schema_file_name))
+            os.path.join(args.save, schema_file_name),
+            no_scalar_datatype_mapping=args.no_name_mapping
+            )
         function_builder.generate_grammar_file(args.save)
         
 
@@ -123,7 +130,8 @@ if __name__ == '__main__':
             query_parameter_file_path=os.path.join(
                 parsed_schema_path, query_parameter_file_name),
             mutation_parameter_file_path=os.path.join(
-                parsed_schema_path, mutation_parameter_file_name)
+                parsed_schema_path, mutation_parameter_file_name),
+            
         )
 
         obj_seq_builder = ObjectSequenceBuilder(
