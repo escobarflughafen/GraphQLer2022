@@ -1,13 +1,6 @@
 import sys, os, random
 from fuzzing.fuzzer.fuzzer import Fuzzer
-
-default_constants = {
-    'Int': 1,
-    'Float': 1.1,
-    'String': 'teststring',
-    'Enum': 0,
-    'Boolean': True,
-}
+from fuzzing.fuzzer.configs.constant_dict import default_constants
 
 class RandomFuzzer(Fuzzer):
     def __init__(self, schema, cache):

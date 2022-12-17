@@ -3,13 +3,7 @@ import sys
 import os
 import random
 from fuzzing.fuzzer.fuzzer import Fuzzer
-
-default_constants = {
-    'Int': 1,
-    'Float': 1.1,
-    'String': 'teststring',
-    'Enum': 0
-}
+from fuzzing.fuzzer.configs.constant_dict import default_constants
 
 def add_escape_backslash(string):
     escapestr = ''

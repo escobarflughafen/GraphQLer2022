@@ -6,6 +6,10 @@ import progressbar
 from fuzzing.fuzzer.fuzzer import Fuzzer
 from graphql_types.process_functions import FunctionBuilder
 
+import sys
+
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
 
 def is_dynamic_parameter(arg):
     return arg["kind"] == "SCALAR" and arg["name"] == 'ID'
@@ -130,9 +134,7 @@ class Requestor:
                         f"error in concretizing function argument {arg}")
 
     def handle_error(self, queryname, response):
-        print(response)
-        '''
-        errors = response["error"]["errors"]
+        errors = response["errors"]
         for error in errors:
             error_code = error["extensions"]["code"]
             error_msg = error["message"]
@@ -144,8 +146,7 @@ class Requestor:
                     "query": queryname
                 }
         
-            print(f"""ERROR - {queryname}: {error_code}""")
-        '''
+            eprint(f"""ERROR - {queryname}: {error_code}""")
 
         
 
