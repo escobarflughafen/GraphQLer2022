@@ -70,7 +70,6 @@ def get_args():
         action='store_true'
     )
 
-
     return parser
 
 
@@ -109,12 +108,11 @@ if __name__ == '__main__':
         function_builder = FunctionBuilder(
             os.path.join(args.save, schema_file_name),
             no_scalar_datatype_mapping=args.no_name_mapping
-            )
+        )
         function_builder.generate_grammar_file(args.save)
-        
 
     elif args.mode == 'fuzzing':
-        
+
         url = args.url
         parsed_schema_path = args.schema
         if not os.path.isdir(parsed_schema_path):
@@ -131,7 +129,7 @@ if __name__ == '__main__':
                 parsed_schema_path, query_parameter_file_name),
             mutation_parameter_file_path=os.path.join(
                 parsed_schema_path, mutation_parameter_file_name),
-            
+
         )
 
         obj_seq_builder = ObjectSequenceBuilder(
@@ -151,7 +149,8 @@ if __name__ == '__main__':
         elif args.fuzzer == 'random':
             fuzzer = RandomFuzzer(schema, cache)
         elif args.fuzzer == 'wordlist':
-            fuzzer = WordlistFuzzer(schema, cache, open(args.wordlist).readlines())
+            fuzzer = WordlistFuzzer(
+                schema, cache, open(args.wordlist).readlines())
         else:
             fuzzer = RandomFuzzer(schema, cache)
 
@@ -166,5 +165,5 @@ if __name__ == '__main__':
 
         requestor.execute(schema)
         logger.log()
-        json.dump(requestor.errors, open(os.path.join(parsed_schema_path, 'errors.json'), 'w'))
-
+        json.dump(requestor.errors, open(os.path.join(
+            parsed_schema_path, 'errors.json'), 'w'))
