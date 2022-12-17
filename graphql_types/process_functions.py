@@ -30,7 +30,7 @@ class FunctionBuilder:
 
     # during the first call, usually we only provide schema json file and there will be 3 files generated for user to fix
     # next call we will load original schema with 3 modified files and the datatype will be overwrited during the initialication
-    def __init__(self, schema_json_file_path, function_list_file_path = None, query_parameter_file_path = None, mutation_parameter_file_path = None):
+    def __init__(self, schema_json_file_path, function_list_file_path = None, query_parameter_file_path = None, mutation_parameter_file_path = None, perform_scalar_datatype_mapping = True):
         """
         Parameters
         ----------
@@ -44,6 +44,7 @@ class FunctionBuilder:
         f.close()
         self.schema_json = schema_json
         self.objects = schema_json["objects"]
+        self.perform_scalar_datatype_mapping = perform_scalar_datatype_mapping
 
         # if there are no input type, we won't load input object list
         if schema_json.get("inputObjects") != None:
@@ -468,7 +469,10 @@ class FunctionBuilder:
                         # if it is other scalar or enum type we will search the scalar-datatype list
                         # to look for matching names.
                         elif arg_data_type["kind"] == "SCALAR" or arg_data_type["kind"] == "ENUM":
-                            list[function_name]["inputDatatype"][arg_name] = self._get_scalar_with_datatype(arg_name)
+                            if self.perform_scalar_datatype_mapping:
+                                list[function_name]["inputDatatype"][arg_name] = self._get_scalar_with_datatype(arg_name)
+                            else:
+                                list[function_name]["inputDatatype"][arg_name] = None
                         # Otherwise if it is an input object, we will expand and replace the input object with 
                         # the actual object inside it. We will also check if there's any ID type
                         # inside the input object. Then we are basically doing similar things by searching
@@ -500,7 +504,10 @@ class FunctionBuilder:
                         # if it is other scalar or enum type we will search the scalar-datatype list
                         # to look for matching names.
                         elif arg_data_type["kind"] == "SCALAR" or arg_data_type["kind"] == "ENUM":
-                            list[function_name]["inputDatatype"][arg_name] = self._get_scalar_with_datatype(arg_name)
+                            if self.perform_scalar_datatype_mapping:
+                                list[function_name]["inputDatatype"][arg_name] = self._get_scalar_with_datatype(arg_name)
+                            else:
+                                list[function_name]["inputDatatype"][arg_name] = None
                         # Otherwise if it is an input object, we will expand and replace the input object with 
                         # the actual object inside it. We will also check if there's any ID type
                         # inside the input object. Then we are basically doing similar things by searching
@@ -534,7 +541,10 @@ class FunctionBuilder:
                         # if it is other scalar or enum type we will search the scalar-datatype list
                         # to look for matching names.
                         elif arg_data_type["kind"] == "SCALAR" or arg_data_type["kind"] == "ENUM":
-                            list[function_name]["inputDatatype"][arg_name] = self._get_scalar_with_datatype(arg_name)
+                            if self.perform_scalar_datatype_mapping:
+                                list[function_name]["inputDatatype"][arg_name] = self._get_scalar_with_datatype(arg_name)
+                            else:
+                                list[function_name]["inputDatatype"][arg_name] = None
                         # Otherwise if it is an input object, we will expand and replace the input object with 
                         # the actual object inside it. We will also check if there's any ID type
                         # inside the input object. Then we are basically doing similar things by searching
@@ -599,7 +609,10 @@ class FunctionBuilder:
             # if it is other scalar or enum type we will search the scalar-datatype list
             # to look for matching names.
             elif input_object_body["kind"] == "SCALAR" or input_object_body["kind"] == "ENUM":
-                output[input_object_name] = self._get_scalar_with_datatype(input_object_name)
+                if self.perform_scalar_datatype_mapping:
+                    output[input_object_name] = self._get_scalar_with_datatype(input_object_name)
+                else:
+                    output[input_object_name] = None
             # if we found an inner object, we call the function again to search for the input object name recursively
             elif input_object_body["kind"] == "INPUT_OBJECT":
                 output[input_object_name] = self._expand_object_from_input_object(input_object_body["name"], output_datatype)
