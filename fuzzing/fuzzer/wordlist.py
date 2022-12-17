@@ -11,39 +11,40 @@ default_constants = {
     'Enum': 0
 }
 
+def add_escape_backslash(string):
+    escapestr = ''
+
+    for ch in string:
+        if ch == '"':
+            escapestr += '\\"'
+        elif ch == '\\':
+            escapestr += '\\\\'
+        else:
+            escapestr += ch
+
+    return escapestr
+
+
 class WordlistFuzzer(Fuzzer):
 
-    def __init__(self, schema, cache, wordlists: dict):
+    def __init__(self, schema, cache, wordlists):
         super().__init__(schema, cache)
-        self.wordlists = {
-            static_type: open(wordlist) for static_type, wordlist in wordlists.items()
-        }
+        self.wordlists = [add_escape_backslash(w).replace('\n', '') for w in wordlists]
 
     def resolve_int(self, arg):
-        try:
-            return int(self.wordlists['Int'].readline())
-        except Exception:
             return default_constants['Int']
 
     def resolve_float(self, arg):
-        try:
-            return float(self.wordlists['Float'].readline())
-        except Exception:
             return default_constants['Float']
 
     def resolve_string(self, arg):
-        return self.wordlists['String'].readline()[:-1]
+        return self.wordlists[random.randint(0, len(self.wordlists)-1)]
 
     def resolve_enum(self, arg):
         enum_schema = self.schema["enums"]
 
         enum_oftype = enum_schema[arg["kind"]]
         enum_values = [v["name"] for v in enum_oftype["values"]]
-        
-        wordlist_value = self.wordlists["Enum"].readline()
-        
-        if wordlist_value not in enum_values:
-            return enum_values[default_constants['Enum']]
 
-        return self.wordlists["Enum"].readline()[:-1]
-    
+        return enum_values[random.randint(0, len(enum_values)-1)]
+        

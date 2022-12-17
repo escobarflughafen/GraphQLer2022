@@ -26,10 +26,17 @@ class RandomFuzzer(Fuzzer):
             return default_constants['Float']
 
     def resolve_string(self, arg):
-        length = random.randint(1, 1000)
+        length = random.randint(1, 100)
         string = ""
+        
         for i in range(length):
-            string += chr(random.randint(0x20, 0x7E))
+            char = chr(random.randint(0x20, 0x7E))
+            if char == '"':
+                char = '\\"'
+            elif char == "\\":
+                char = "\\\\"
+
+            string += char
         
         return string
 

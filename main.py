@@ -7,6 +7,8 @@ from pprint import pprint
 from fuzzing.requestor import Requestor
 from fuzzing.cache import Cache
 from fuzzing.fuzzer.constant import ConstantFuzzer
+from fuzzing.fuzzer.randomizer import RandomFuzzer
+from fuzzing.fuzzer.wordlist import WordlistFuzzer
 from graphql_types.process_functions import FunctionBuilder
 from introspection.sequence import SequenceBuilder
 from introspection.object_dependency import ObjectSequenceBuilder
@@ -58,6 +60,12 @@ def get_args():
         type=str
     )
 
+    parser.add_argument(
+        '--fuzzer',
+        type=str
+    )
+
+
     return parser
 
 
@@ -99,6 +107,7 @@ if __name__ == '__main__':
         
 
     elif args.mode == 'fuzzing':
+        
         url = args.url
         parsed_schema_path = args.schema
         if not os.path.isdir(parsed_schema_path):
@@ -129,10 +138,18 @@ if __name__ == '__main__':
 
         cache = Cache(schema)
         logger = Logger(parsed_schema_path)
+        if args.fuzzer == 'constant':
+            fuzzer = ConstantFuzzer(schema, cache)
+        elif args.fuzzer == 'random':
+            fuzzer = RandomFuzzer(schema, cache)
+        elif args.fuzzer == 'wordlist':
+            fuzzer = WordlistFuzzer(schema, cache, open(args.wordlist).readlines())
+        else:
+            fuzzer = RandomFuzzer(schema, cache)
 
         requestor = Requestor(req_seq,
                               cache,
-                              ConstantFuzzer(schema, cache),
+                              fuzzer,
                               url,
                               schema,
                               function_builder,

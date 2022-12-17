@@ -130,6 +130,8 @@ class Requestor:
                         f"error in concretizing function argument {arg}")
 
     def handle_error(self, queryname, response):
+        print(response)
+        '''
         errors = response["error"]["errors"]
         for error in errors:
             error_code = error["extensions"]["code"]
@@ -143,6 +145,9 @@ class Requestor:
                 }
         
             print(f"""ERROR - {queryname}: {error_code}""")
+        '''
+
+        
 
 
     def execute(self, schema):
