@@ -158,4 +158,5 @@ if __name__ == '__main__':
 
         requestor.execute(schema)
         logger.log()
+        json.dump(requestor.errors, open(os.path.join(parsed_schema_path, 'errors.json'), 'w'))
 

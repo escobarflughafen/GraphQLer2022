@@ -6,6 +6,7 @@ import progressbar
 from fuzzing.fuzzer.fuzzer import Fuzzer
 from graphql_types.process_functions import FunctionBuilder
 
+import json
 import sys
 
 def eprint(*args, **kwargs):
@@ -138,13 +139,17 @@ class Requestor:
         for error in errors:
             error_code = error["extensions"]["code"]
             error_msg = error["message"]
-            
-            if error_code in self.errors:
-                self.errors["error_code"] = {
+
+            error_log = {
                     "raw": error,
                     "message": error_msg,
                     "query": queryname
                 }
+            if error_code in self.errors:
+                self.errors[error_code].append(error_log)
+            else:
+                self.errors[error_code] = [error_log]
+
         
             eprint(f"""ERROR - {queryname}: {error_code}""")
 
