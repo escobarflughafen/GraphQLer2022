@@ -79,7 +79,6 @@ Test Schemas will be saved to folder `<dir-to-save-schemas>`, including:
 ```
 
 
-
 -------
 
 ### Fuzzing Testing
@@ -106,3 +105,19 @@ For wordlist mode, use `--wordlist` to specify a wordlist for string type argume
 ```
 
 After testing, results will be saved in `<dir-of-schemas>`.
+
+
+----
+
+### Setting up Test Server
+
+To run the test server, use
+```shell
+cd ./test_server && node ./server.js
+```
+Make sure you start the test server from the directory `./test_server`.
+ 
+The server will be listening to port `4000`, an Apollo GraphQL Console will be available at `http://localhost:4000/graphql`.
+
+The test server schema and resolver is located at `./test_server/data/schema.gql` and `./test_server/data/schema.js`.
+
