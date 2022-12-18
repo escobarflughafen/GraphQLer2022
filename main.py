@@ -26,7 +26,7 @@ def get_args():
         '--mode', '-m',
         required=True,
         type=str,
-        choices=["compile", "fuzzing", "debug_fuzzing"],
+        choices=["compile", "fuzzing"],
         default="compile"
     )
 

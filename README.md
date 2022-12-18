@@ -30,8 +30,7 @@ pip3 install -r requirements.txt
 ```shell
 usage: 
         GraphQLer - a stateful fuzzing tool on GraphQL
-         [-h] --mode
-                                                                        {compile,fuzzing,debug_fuzzing}
+         [-h] --mode {compile,fuzzing}
                                                                         [--test] [--url URL]
                                                                         [--wordlist WORDLIST]
                                                                         [--introspection-json INTROSPECTION_JSON]
@@ -40,7 +39,7 @@ usage:
 
 options:
   -h, --help            show this help message and exit
-  --mode {compile,fuzzing,debug_fuzzing}, -m {compile,fuzzing,debug_fuzzing}
+  --mode {compile,fuzzing}, -m {compile,fuzzing}
   --test, -t
   --url URL, -u URL
   --wordlist WORDLIST, -w WORDLIST
@@ -100,7 +99,7 @@ The default fuzzer is a random fuzzer which generates a random value for each in
 --fuzzer <constant | random | wordlist>
 ```
 
-For wordlist mode, testers could use `--wordlist` to specify a wordlist for string type arguments.
+For wordlist mode, use `--wordlist` to specify a wordlist for string type arguments.
 
 ```
 --wordlist <wordlist-file-path>
