@@ -66,7 +66,7 @@ or, Build from GraphQL server URL
 python3 main.py --mode compile -u <GraphQL-server-url> --save <dir-to-save-schemas>
 ```
 
-
+you can use --no-name-mapping to bypass name mapping method and perform ID only check for input arguments.
 
 Test Schemas will be saved to folder `<dir-to-save-schemas>`, including:
 
