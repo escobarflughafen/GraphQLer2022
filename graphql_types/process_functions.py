@@ -376,6 +376,14 @@ class FunctionBuilder:
 
     # given function type and function name, this function returns the json structure with ofDatatype parameter for the use of function call later
     def build_function_call_schema(self, function_type, function_name):
+        """
+        return schema to build the function call, including input and output datatype mappings and mutation function type mapping.
+
+        Parameters
+        ----------
+        function_type: the type for the function to search for, can only be "query" or "mutation".
+        function_name: the name for the function to build the schema.
+        """
         output_json = {}
         if function_type == "query":
             output_json[function_name] = self.query_datatype_mappings[function_name]["rawdata"]
@@ -434,6 +442,22 @@ class FunctionBuilder:
 
     # main function to map datatype with parameters in the query and mutations
     def link_functions_with_datatype(self, category):
+        """
+        Inner function to perform input and output datatype mapping. Can also be called separately for debug use.
+        It will perform 2 datatype mapping methods:
+
+        1. For every ID type in the input field, we will try to search from the output object for any output 
+        with ID datatype. If any additional object is inside the output object, we will check recursively to 
+        ensure every related object has been searched.
+        2. For any input with exactly the same name as the one inside the object list, we will mark the input 
+        as dependent on the related object. This is mainly for reducing human editing workload later, although 
+        this can bring many false mappings. This method can be disabled by defining "no_scalar_datatype_mapping" to True.
+
+
+        Parameters
+        ----------
+        category: the category for the function to process, can only be "queries" or "mutations".
+        """
         list = {}
         function_objects = self.schema_json[category]
 
@@ -641,27 +665,3 @@ class FunctionBuilder:
         else:
             return None
 
-
-#test = FunctionBuilder("debug/schema.json")
-
-#test.generate_grammar_file()
-#test2 = test.build_function_call_schema("mutation", "checkoutAttributesUpdate")
-
-#print(test2)
-'''
-test = FunctionBuilder("schema_wallet.json", query_parameter_file_path="function_input.txt", mutation_parameter_file_path="function_mutation_input.txt")
-test1 = test.get_query_mappings()
-test2 = test.get_mutation_mappings()
-
-test4 = test.get_query_mapping_by_input_datatype("Message")
-test5 = test.get_query_mapping_by_output_datatype("Message")
-test6 = test.get_mutation_mapping_by_input_datatype("Message")
-test7 = test.get_mutation_mapping_by_output_datatype("Message")
-test.print_function_list('function_list.txt')
-test8 = test.build_function_call_schema("mutation", "createUser")
-test.print_query_parameter_list('function_input.txt')
-#test.read_query_parameter_list('function_input.txt')
-test.print_mutation_parameter_list('function_mutation_input.txt')
-#test.read_mutation_parameter_list('function_mutation_input.txt')
-test3 = ""
-'''
