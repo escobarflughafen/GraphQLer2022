@@ -28,14 +28,15 @@ pip3 install -r requirements.txt
 ### Basic Usage
 
 ```shell
-python3 main.py --help
-
-usage:
+usage: 
         GraphQLer - a stateful fuzzing tool on GraphQL
-         [-h] --mode {compile,fuzzing,debug_fuzzing}
-                                                                        [--test] [--url URL] [--wordlist WORDLIST]
+         [-h] --mode
+                                                                        {compile,fuzzing,debug_fuzzing}
+                                                                        [--test] [--url URL]
+                                                                        [--wordlist WORDLIST]
                                                                         [--introspection-json INTROSPECTION_JSON]
                                                                         [--save SAVE] [--schema SCHEMA]
+                                                                        [--fuzzer FUZZER] [--no-name-mapping]
 
 options:
   -h, --help            show this help message and exit
@@ -46,9 +47,9 @@ options:
   --introspection-json INTROSPECTION_JSON, -i INTROSPECTION_JSON
   --save SAVE, -o SAVE
   --schema SCHEMA
+  --fuzzer FUZZER
+  --no-name-mapping
 ```
-
-
 
 --------
 
@@ -92,7 +93,17 @@ python3 main.py --mode fuzzing -u <GraphQL-server-url> --schema <dir-of-schemas>
 
 The path `<dir-of-schemas>` is the previously created schema directory (generated from `compile` mode).
 
-After testing, results will be saved in `<dir-of-schemas>/results.txt`.
 
+The default fuzzer is a random fuzzer which generates a random value for each input argument. Three types of fuzzers are available and use `--fuzzer` to specify the fuzzer type.
 
+```
+--fuzzer <constant | random | wordlist>
+```
 
+For wordlist mode, testers could use `--wordlist` to specify a wordlist for string type arguments.
+
+```
+--wordlist <wordlist-file-path>
+```
+
+After testing, results will be saved in `<dir-of-schemas>`.
