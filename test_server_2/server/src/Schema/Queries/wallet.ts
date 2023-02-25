@@ -1,4 +1,4 @@
-import { GraphQLList } from "graphql";
+import { GraphQLList, GraphQLID } from "graphql";
 import { WalletType } from "../TypeDefs/types";
 import { wallet } from "../../Entities/wallet";
 
@@ -21,8 +21,12 @@ export const GET_WALLETS = {
 
 export const GET_WALLET = {
     type: WalletType,
+    args: {
+        id: {type: GraphQLID},
+    },
     resolve(parent: any, args: any) {
         const id = args.id;
+        // should add null detection
         return wallet.findOne({where: {id: id}}).then((wallet) => {
             return {
                 id: wallet?.id,

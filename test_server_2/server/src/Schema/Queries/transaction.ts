@@ -1,4 +1,4 @@
-import { GraphQLList } from "graphql";
+import { GraphQLList, GraphQLID } from "graphql";
 import { TransactionType } from "../TypeDefs/types";
 import { transaction } from "../../Entities/transaction";
 
@@ -23,8 +23,12 @@ export const GET_TRANSACTIONS = {
 
 export const GET_TRANSACTION = {
     type: TransactionType,
+    args: {
+        id: {type: GraphQLID},
+    },
     resolve(parent: any, args: any) {
         const id = args.id;
+        // should add null detection
         return transaction.findOne({where: {id: id}}).then((transaction) => {
             return {
                 id: transaction?.id,

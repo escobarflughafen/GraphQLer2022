@@ -1,4 +1,4 @@
-import { GraphQLList } from "graphql";
+import { GraphQLList, GraphQLID } from "graphql";
 import { LocationType } from "../TypeDefs/types";
 import { location } from "../../Entities/location";
 
@@ -19,8 +19,12 @@ export const GET_LOCATIONS = {
 
 export const GET_LOCATION = {
     type: LocationType,
+    args: {
+        id: {type: GraphQLID},
+    },
     resolve(parent: any, args: any) {
         const id = args.id;
+        // should add null detection
         return location.findOne({where: {id: id}}).then((location) => {
             return {
                 id: location?.id,
