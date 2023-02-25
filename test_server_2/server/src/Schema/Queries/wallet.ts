@@ -6,14 +6,32 @@ import { wallet } from "../../Entities/wallet";
 export const GET_WALLETS = {
     type: new GraphQLList(WalletType),
     resolve() {
-        return wallet.find();
+        return wallet.find().then((wallets) => {
+            return wallets.map((wallet) => ({
+                id: wallet.id,
+                name: wallet.name,
+                currencyId: wallet.currency_id,
+                transactions: null, //should be changed to list of IDs by finding related transactions
+                userId: wallet.owner_id,
+                balance: 0.0, //should calculate all transactions and return result here
+            }));
+        });;
     }
 }
 
 export const GET_WALLET = {
-    type: new GraphQLList(WalletType),
+    type: WalletType,
     resolve(parent: any, args: any) {
         const id = args.id;
-        return wallet.findOne({where: {id: id}});
+        return wallet.findOne({where: {id: id}}).then((wallet) => {
+            return {
+                id: wallet?.id,
+                name: wallet?.name,
+                currencyId: wallet?.currency_id,
+                transactions: null, //should be changed to list of IDs by finding related transactions
+                userId: wallet?.owner_id,
+                balance: 0.0, //should calculate all transactions and return result here
+            };
+        });
     }
 }
