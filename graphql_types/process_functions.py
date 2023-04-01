@@ -335,7 +335,7 @@ class FunctionBuilder:
         path: location and name to read the file from.
         """
         f = open(path, 'r')
-        input_json = yaml.load(f.read())
+        input_json = yaml.safe_load(f.read())
         for function_name, function_type in input_json.items():
                 self.mutation_datatype_mappings[function_name]["functionType"] = function_type
         return
@@ -350,7 +350,7 @@ class FunctionBuilder:
         path: location and name to read the file from.
         """
         f = open(path, 'r')
-        input_json = yaml.load(f.read())
+        input_json = yaml.safe_load(f.read())
         for function_name, function_body in input_json.items():
             self.query_datatype_mappings[function_name]["inputDatatype"] = function_body["input"]
             self.query_datatype_mappings[function_name]["outputDatatype"] = function_body["output"]
@@ -367,7 +367,7 @@ class FunctionBuilder:
         path: location and name to read the file from.
         """
         f = open(path, 'r')
-        input_json = yaml.load(f.read())
+        input_json = yaml.safe_load(f.read())
         for function_name, function_body in input_json.items():
             self.mutation_datatype_mappings[function_name]["inputDatatype"] = function_body["input"]
             self.mutation_datatype_mappings[function_name]["outputDatatype"] = function_body["output"]
@@ -468,119 +468,66 @@ class FunctionBuilder:
             # to bypass any status like LIST, only get real OBJECT
             output_data_type = self._get_type(output)
 
-            # Since I assume every output is actually an Object, so I actually did not check for any other datatypes.
-            if output_data_type["kind"] == "OBJECT":
-                list[function_name] = {}
-                # here I just copy the raw data just in case
-                list[function_name]["rawdata"] = function_body
-                list[function_name]["inputDatatype"] = {}
+            list[function_name] = {}
+            # here I just copy the raw data just in case
+            list[function_name]["rawdata"] = function_body
 
-                # since the output will be a single Object, we just copy its original structure here
-                list[function_name]["outputDatatype"] = output_data_type
+            list[function_name]["inputDatatype"] = {}
+            # since the output will be a single Object, we just copy its original structure here
+            list[function_name]["outputDatatype"] = output_data_type
 
-                # First we check if the function has input
-                if function_body["args"] != None:
-                    # then we check for any input items and see if it match any of the Objects
-                    for arg_name, arg_body in function_body["args"].items():
-                        # again we only focus on the real Object, not the status like LIST or something
-                        arg_data_type = self._get_type(arg_body)
-                        # if the scalar type is ID, then we want to find if there's any ID exists
-                        # in the output datatype. If exists, we will assume that the input ID here 
-                        # is related to one of the output datatype (we search recursively for every 
-                        # child objects inside the output object).
-                        if arg_data_type["kind"] == "SCALAR" and arg_data_type["name"] == "ID":
-                            list[function_name]["inputDatatype"][arg_name] = self._search_related_object(arg_name, output_data_type["name"])
-                        # if it is other scalar or enum type we will search the scalar-datatype list
-                        # to look for matching names.
-                        elif arg_data_type["kind"] == "SCALAR" or arg_data_type["kind"] == "ENUM":
-                            if self.no_scalar_datatype_mapping:
-                                list[function_name]["inputDatatype"][arg_name] = None
-                            else:
-                                list[function_name]["inputDatatype"][arg_name] = self._get_scalar_with_datatype(arg_name)
-                        # Otherwise if it is an input object, we will expand and replace the input object with 
-                        # the actual object inside it. We will also check if there's any ID type
-                        # inside the input object. Then we are basically doing similar things by searching
-                        # inside the output datatype and find the mapping.
-                        elif arg_data_type["kind"] == "INPUT_OBJECT":
+            # First we check if the function has input
+            if function_body["args"] != None:
+                # then we check for any input items and see if it match any of the Objects
+                for arg_name, arg_body in function_body["args"].items():
+                    # again we only focus on the real Object, not the status like LIST or something
+                    arg_data_type = self._get_type(arg_body)
+
+                    # if the scalar type is ID, then we want to find if there's any ID exists
+                    # in the output datatype. If exists, we will assume that the input ID here 
+                    # is related to one of the output datatype (we search recursively for every 
+                    # child objects inside the output object).
+
+                    # for INPUT_OBJECT:
+                    if arg_data_type["kind"] == "INPUT_OBJECT":
+                        # we will expand and replace the input object with the actual object inside it. 
+                        # We will also check if there's any ID type inside the input object. 
+                        # Then we are basically doing similar things by searching inside the output datatype and find the mapping.
+                        if output_data_type["kind"] == "OBJECT":
                             list[function_name]["inputDatatype"][arg_name] = self._expand_object_from_input_object(arg_data_type["name"], output_data_type["name"])
-                else:
-                    list[function_name]["inputDatatype"] = None
-
-            elif output_data_type["kind"] == "SCALAR":
-                list[function_name] = {}
-                # here I just copy the raw data just in case
-                list[function_name]["rawdata"] = function_body
-                list[function_name]["inputDatatype"] = {}
-
-                # since the output will be a single Object, we just copy its original structure here
-                list[function_name]["outputDatatype"] = output_data_type
-
-                # First we check if the function has input
-                if function_body["args"] != None:
-                    # then we check for any input items and see if it match any of the Objects
-                    for arg_name, arg_body in function_body["args"].items():
-                        # again we only focus on the real Object, not the status like LIST or something
-                        arg_data_type = self._get_type(arg_body)
-                        # if the scalar type is ID and the output is scalar, there's no way to find
-                        # the related datatype. Thus we will just put a None for now. 
-                        if arg_data_type["kind"] == "SCALAR" and arg_data_type["name"] == "ID":
-                            list[function_name]["inputDatatype"][arg_name] = None
-                        # if it is other scalar or enum type we will search the scalar-datatype list
-                        # to look for matching names.
-                        elif arg_data_type["kind"] == "SCALAR" or arg_data_type["kind"] == "ENUM":
-                            if self.no_scalar_datatype_mapping:
-                                list[function_name]["inputDatatype"][arg_name] = None
-                            else:
-                                list[function_name]["inputDatatype"][arg_name] = self._get_scalar_with_datatype(arg_name)
-                        # Otherwise if it is an input object, we will expand and replace the input object with 
-                        # the actual object inside it. We will also check if there's any ID type
-                        # inside the input object. Then we are basically doing similar things by searching
-                        # inside the output datatype and find the mapping.
-                        elif arg_data_type["kind"] == "INPUT_OBJECT":
+                        # if output is SCALAR or ENUM, then no actual datatype can be defined.
+                        # we will just pass a None for the output datatype.
+                        # the input datatype mapping will probably be None because of this.
+                        elif output_data_type["kind"] == "SCALAR" or output_data_type["kind"] == "ENUM":
                             list[function_name]["inputDatatype"][arg_name] = self._expand_object_from_input_object(arg_data_type["name"], None)
-                else:
-                    list[function_name]["inputDatatype"] = None
-
-            elif output_data_type["kind"] == "INTERFACE":
-                pass
-            elif output_data_type["kind"] == "UNION":
-                list[function_name] = {}
-                # here I just copy the raw data just in case
-                list[function_name]["rawdata"] = function_body
-                list[function_name]["inputDatatype"] = {}
-
-                # since the output will be a single Object, we just copy its original structure here
-                list[function_name]["outputDatatype"] = output_data_type
-
-                # First we check if the function has input
-                if function_body["args"] != None:
-                    # then we check for any input items and see if it match any of the Objects
-                    for arg_name, arg_body in function_body["args"].items():
-                        # again we only focus on the real Object, not the status like LIST or something
-                        arg_data_type = self._get_type(arg_body)
-                        # if the scalar type is ID and the output is scalar, there's no way to find
-                        # the related datatype. Thus we will just put a None for now. 
-                        if arg_data_type["kind"] == "SCALAR" and arg_data_type["name"] == "ID":
+                        # TODO: add INTERFACE and UNION
+                        else:
+                            pass
+                    # for SCALAR with ID type:
+                    elif arg_data_type["kind"] == "SCALAR" and arg_data_type["name"] == "ID":
+                        # if the scalar type is ID, we will try to find its related ID in the output.
+                        # if the output is an object, we will perform search for related object. 
+                        if output_data_type["kind"] == "OBJECT":
+                            list[function_name]["inputDatatype"][arg_name] = self._search_related_object(arg_name, output_data_type["name"])
+                        # if the output is SCALAR or ENUM, there is no way to map the ID with these types.
+                        # so we will just mark it as None.
+                        elif output_data_type["kind"] == "SCALAR" or output_data_type["kind"] == "ENUM":
                             list[function_name]["inputDatatype"][arg_name] = None
-                        # if it is other scalar or enum type we will search the scalar-datatype list
-                        # to look for matching names.
-                        elif arg_data_type["kind"] == "SCALAR" or arg_data_type["kind"] == "ENUM":
-                            if self.no_scalar_datatype_mapping:
-                                list[function_name]["inputDatatype"][arg_name] = None
-                            else:
-                                list[function_name]["inputDatatype"][arg_name] = self._get_scalar_with_datatype(arg_name)
-                        # Otherwise if it is an input object, we will expand and replace the input object with 
-                        # the actual object inside it. We will also check if there's any ID type
-                        # inside the input object. Then we are basically doing similar things by searching
-                        # inside the output datatype and find the mapping.
-                        elif arg_data_type["kind"] == "INPUT_OBJECT":
-                            list[function_name]["inputDatatype"][arg_name] = self._expand_object_from_input_object(arg_data_type["name"], None)
-                else:
-                    list[function_name]["inputDatatype"] = None
+                        # TODO: add INTERFACE and UNION
+                        else:
+                            pass
+                    # for other SCALAR or ENUM type:
+                    # if it is other scalar or enum type we will search the scalar-datatype list
+                    # to look for matching names.
+                    elif arg_data_type["kind"] == "SCALAR" or arg_data_type["kind"] == "ENUM":
+                        if self.no_scalar_datatype_mapping:
+                            list[function_name]["inputDatatype"][arg_name] = None
+                        else:
+                            list[function_name]["inputDatatype"][arg_name] = self._get_scalar_with_datatype(arg_name)
 
-
-            elif output_data_type["kind"] == "ENUM":
-                pass
+            else:
+                # if no input then just simply set input datatype to None.
+                list[function_name]["inputDatatype"] = None
 
         return list
 
